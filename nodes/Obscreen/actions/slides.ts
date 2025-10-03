@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { 
 	buildApiUrl, 
@@ -456,7 +456,102 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	{
+		displayName: 'Fields',
+		name: 'fields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			resourceMapper: {
+				resourceMapperMethod: 'slideMappingColumns',
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['update'],
+			},
+		},
+	},
 ];
+
+export async function slideMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+	return {
+		fields: [
+			{
+				id: 'enabled',
+				displayName: 'Enabled',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'boolean',
+			},
+			{
+				id: 'duration',
+				displayName: 'Duration',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'number',
+			},
+			{
+				id: 'position',
+				displayName: 'Position',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'number',
+			},
+			{
+				id: 'delegateDuration',
+				displayName: 'Delegate Duration',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'boolean',
+			},
+			{
+				id: 'scheduling',
+				displayName: 'Scheduling Type',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'options',
+				options: [
+					{
+						name: 'Loop',
+						value: 'loop',
+					},
+					{
+						name: 'Date Time',
+						value: 'datetime',
+					},
+					{
+						name: 'In Week',
+						value: 'inweek',
+					},
+				],
+			},
+		],
+	};
+}
 
 async function getAllSlides(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const endpoint = '/api/slides';
@@ -694,24 +789,31 @@ async function updateSlide(
 	const contentId = this.getNodeParameter('contentId', itemIndex, '') as string;
 	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
 	const playlistId = getResourceId(playlistIdValue);
-	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
-	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
-	const position = this.getNodeParameter('position', itemIndex, 999) as number;
-	const delegateDuration = this.getNodeParameter('delegateDuration', itemIndex, false) as boolean;
-	const scheduling = this.getNodeParameter('scheduling', itemIndex, 'loop') as string;
+	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, any> = {
-		enabled: enabled.toString(),
-		duration,
-		position,
-		delegate_duration: delegateDuration.toString(),
-		scheduling,
-	};
+	const params: Record<string, any> = {};
+	
+	// Map the fields from Resource Mapper to API parameters
+	if (fields.enabled !== undefined) {
+		params.enabled = fields.enabled.toString();
+	}
+	if (fields.duration !== undefined) {
+		params.duration = fields.duration;
+	}
+	if (fields.position !== undefined) {
+		params.position = fields.position;
+	}
+	if (fields.delegateDuration !== undefined) {
+		params.delegate_duration = fields.delegateDuration.toString();
+	}
+	if (fields.scheduling !== undefined) {
+		params.scheduling = fields.scheduling;
+	}
 
 	if (contentId) params.content_id = parseInt(contentId, 10);
 	if (playlistId) params.playlist_id = playlistId;
 
-	if (scheduling === 'datetime') {
+	if (fields.scheduling === 'datetime') {
 		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
 		const datetimeEnd = this.getNodeParameter('datetimeEnd', itemIndex, '') as string;
 		
@@ -728,7 +830,7 @@ async function updateSlide(
 		}
 			params.datetime_end = datetimeEnd;
 		}
-	} else if (scheduling === 'inweek') {
+	} else if (fields.scheduling === 'inweek') {
 		const dayStart = this.getNodeParameter('dayStart', itemIndex, 1) as number;
 		const dayEnd = this.getNodeParameter('dayEnd', itemIndex, 5) as number;
 		const timeStart = this.getNodeParameter('timeStart', itemIndex, '') as string;

@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { buildApiUrl, executeApiRequest, getResourceId } from '../utils';
 
@@ -109,7 +109,7 @@ export const playlistParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['playlists'],
-				operation: ['create', 'update'],
+				operation: ['create'],
 			},
 		},
 	},
@@ -122,7 +122,7 @@ export const playlistParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['playlists'],
-				operation: ['create', 'update'],
+				operation: ['create'],
 			},
 		},
 	},
@@ -152,11 +152,88 @@ export const playlistParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['playlists'],
-				operation: ['create', 'update'],
+				operation: ['create'],
+			},
+		},
+	},
+	{
+		displayName: 'Fields',
+		name: 'fields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			resourceMapper: {
+				resourceMapperMethod: 'playlistMappingColumns',
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['playlists'],
+				operation: ['update'],
 			},
 		},
 	},
 ];
+
+export async function playlistMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+	return {
+		fields: [
+			{
+				id: 'name',
+				displayName: 'Name',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'string',
+			},
+			{
+				id: 'loopMode',
+				displayName: 'Loop Mode',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'options',
+				options: [
+					{
+						name: 'Sequential',
+						value: 'sequential',
+					},
+					{
+						name: 'Time Sync',
+						value: 'timesync',
+					},
+					{
+						name: 'Random',
+						value: 'random',
+					},
+				],
+			},
+			{
+				id: 'enabled',
+				displayName: 'Enabled',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'boolean',
+			},
+		],
+	};
+}
 
 export async function executePlaylistOperation(
 	this: IExecuteFunctions,
@@ -301,15 +378,20 @@ async function updatePlaylist(
 ): Promise<any> {
 	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
 	const playlistId = getResourceId(playlistIdValue);
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
-	const loopMode = this.getNodeParameter('loopMode', itemIndex, 'sequential') as string;
+	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
 	const params: Record<string, string> = {};
 	
-	if (name) params.name = name;
-	params.enabled = enabled.toString();
-	params.loop_mode = loopMode;
+	// Map the fields from Resource Mapper to API parameters
+	if (fields.name !== undefined && fields.name !== '') {
+		params.name = fields.name;
+	}
+	if (fields.enabled !== undefined) {
+		params.enabled = fields.enabled.toString();
+	}
+	if (fields.loopMode !== undefined) {
+		params.loop_mode = fields.loopMode;
+	}
 
 	const endpoint = `/api/playlists/${playlistId}`;
 	const url = buildApiUrl(endpoint, params);

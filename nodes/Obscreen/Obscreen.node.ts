@@ -9,10 +9,10 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 // Import actions from modular structure
-import { contentOperations, contentParameters, executeContentOperation } from './actions/contents';
+import { contentOperations, contentParameters, executeContentOperation, contentMappingColumns } from './actions/contents';
 import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation } from './actions/contentFolders';
-import { playlistOperations, playlistParameters, executePlaylistOperation } from './actions/playlists';
-import { slideOperations, slideParameters, executeSlideOperation } from './actions/slides';
+import { playlistOperations, playlistParameters, executePlaylistOperation, playlistMappingColumns } from './actions/playlists';
+import { slideOperations, slideParameters, executeSlideOperation, slideMappingColumns } from './actions/slides';
 import { processOperations, processParameters, executeProcessOperation } from './actions/process';
 
 const SEARCH_LIMIT = 50;
@@ -236,6 +236,11 @@ export class Obscreen implements INodeType {
 					results: results.slice(0, SEARCH_LIMIT),
 				};
 			},
+		},
+		resourceMapping: {
+			playlistMappingColumns,
+			slideMappingColumns,
+			contentMappingColumns,
 		},
 	};
 
