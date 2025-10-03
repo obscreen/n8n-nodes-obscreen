@@ -1,21 +1,17 @@
 import type {
 	IExecuteFunctions,
-	ILoadOptionsFunctions,
 	INodeExecutionData,
-	INodeListSearchResult,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
 // Import actions from modular structure
-import { contentOperations, contentParameters, executeContentOperation, contentMappingColumns } from './actions/contents';
-import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation } from './actions/contentFolders';
-import { playlistOperations, playlistParameters, executePlaylistOperation, playlistMappingColumns } from './actions/playlists';
-import { slideOperations, slideParameters, executeSlideOperation, slideMappingColumns } from './actions/slides';
-import { processOperations, processParameters, executeProcessOperation } from './actions/process';
-
-const SEARCH_LIMIT = 50;
+import { contentOperations, contentParameters, executeContentOperation, contentMappingColumns, searchContentsMethod } from './actions/content/contents';
+import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation } from './actions/contentFolder/contentFolders';
+import { playlistOperations, playlistParameters, executePlaylistOperation, playlistCreateMappingColumns, playlistUpdateMappingColumns, searchPlaylistsMethod } from './actions/playlist/playlists';
+import { slideOperations, slideParameters, executeSlideOperation, slideMappingColumns, searchSlidesMethod } from './actions/slide/slides';
+import { processOperations, processParameters, executeProcessOperation } from './actions/process/process';
 
 export class Obscreen implements INodeType {
 	description: INodeTypeDescription = {
@@ -84,161 +80,13 @@ export class Obscreen implements INodeType {
 
 	methods = {
 		listSearch: {
-			async searchPlaylists(
-				this: ILoadOptionsFunctions,
-				query?: string,
-			): Promise<INodeListSearchResult> {
-				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
-				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
-				
-				const endpoint = '/api/playlists';
-				const fullUrl = `${baseUrl}${endpoint}`;
-				
-				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
-					method: 'GET',
-					url: fullUrl,
-					returnFullResponse: true,
-				});
-				
-				const playlists = Array.isArray(response.body) ? response.body : [];
-				
-				// Filter playlists based on query if provided
-				let filteredPlaylists = playlists;
-				if (query) {
-					filteredPlaylists = playlists.filter((playlist: any) => 
-						playlist.name?.toLowerCase().includes(query.toLowerCase())
-					);
-				}
-				
-				// Format results for listSearch
-				const results = filteredPlaylists.map((playlist: any) => ({
-					name: playlist.name || `Playlist ${playlist.id}`,
-					value: playlist.id,
-					description: playlist.description || '',
-					url: playlist.url || '',
-				}));
-				
-				return {
-					results: results.slice(0, SEARCH_LIMIT),
-				};
-			},
-			async searchContents(
-				this: ILoadOptionsFunctions,
-				query?: string,
-			): Promise<INodeListSearchResult> {
-				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
-				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
-				
-				const endpoint = '/api/contents/';
-				const fullUrl = `${baseUrl}${endpoint}`;
-				
-				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
-					method: 'GET',
-					url: fullUrl,
-					returnFullResponse: true,
-				});
-				
-				const contents = Array.isArray(response.body) ? response.body : [];
-				
-				// Filter contents based on query if provided
-				let filteredContents = contents;
-				if (query) {
-					filteredContents = contents.filter((content: any) => 
-						content.name?.toLowerCase().includes(query.toLowerCase())
-					);
-				}
-				
-				// Format results for listSearch
-				const results = filteredContents.map((content: any) => ({
-					name: content.name || `Content ${content.id}`,
-					value: content.id,
-					description: content.description || '',
-					url: content.url || '',
-				}));
-				
-				return {
-					results: results.slice(0, SEARCH_LIMIT),
-				};
-			},
-			async searchFolders(
-				this: ILoadOptionsFunctions,
-				query?: string,
-			): Promise<INodeListSearchResult> {
-				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
-				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
-				
-				const endpoint = '/api/contents/folders';
-				const fullUrl = `${baseUrl}${endpoint}`;
-				
-				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
-					method: 'GET',
-					url: fullUrl,
-					returnFullResponse: true,
-				});
-				
-				const folders = Array.isArray(response.body) ? response.body : [];
-				
-				// Filter folders based on query if provided
-				let filteredFolders = folders;
-				if (query) {
-					filteredFolders = folders.filter((folder: any) => 
-						folder.name?.toLowerCase().includes(query.toLowerCase())
-					);
-				}
-				
-				// Format results for listSearch
-				const results = filteredFolders.map((folder: any) => ({
-					name: folder.name || `Folder ${folder.id}`,
-					value: folder.id,
-					description: folder.path || '',
-					url: folder.url || '',
-				}));
-				
-				return {
-					results: results.slice(0, SEARCH_LIMIT),
-				};
-			},
-			async searchSlides(
-				this: ILoadOptionsFunctions,
-				query?: string,
-			): Promise<INodeListSearchResult> {
-				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
-				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
-				
-				const endpoint = '/api/slides';
-				const fullUrl = `${baseUrl}${endpoint}`;
-				
-				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
-					method: 'GET',
-					url: fullUrl,
-					returnFullResponse: true,
-				});
-				
-				const slides = Array.isArray(response.body) ? response.body : [];
-				
-				// Filter slides based on query if provided (search by label)
-				let filteredSlides = slides;
-				if (query) {
-					filteredSlides = slides.filter((slide: any) => 
-						slide.label?.toLowerCase().includes(query.toLowerCase())
-					);
-				}
-				
-				// Format results for listSearch
-				const results = filteredSlides.map((slide: any) => ({
-					name: slide.label || `Slide ${slide.id}`,
-					value: slide.id,
-					description: slide.description || '',
-					url: slide.url || '',
-				}));
-				
-				return {
-					results: results.slice(0, SEARCH_LIMIT),
-				};
-			},
+			searchPlaylists: searchPlaylistsMethod,
+			searchContents: searchContentsMethod,
+			searchSlides: searchSlidesMethod,
 		},
 		resourceMapping: {
-			playlistMappingColumns,
+			playlistCreateMappingColumns: playlistCreateMappingColumns,
+			playlistUpdateMappingColumns: playlistUpdateMappingColumns,
 			slideMappingColumns,
 			contentMappingColumns,
 		},

@@ -1,16 +1,10 @@
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { buildApiUrl, executeApiRequest, getResourceId } from '../utils';
-import type { BulkUploadResult } from '../types';
+import { buildApiUrl, executeApiRequest, getResourceId } from '../../utils';
+import type { BulkUploadResult } from '../../types';
+import { searchContents } from './search';
 
-export const contentFields: INodeProperties = {
-	displayName: 'Options',
-	name: 'options',
-	type: 'collection',
-	placeholder: 'Add Option',
-	default: {},
-	options: [],
-};
+export const searchContentsMethod = searchContents;
 
 export const contentOperations: INodeProperties = {
 	displayName: 'Operation',
