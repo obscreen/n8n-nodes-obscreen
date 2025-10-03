@@ -1,7 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { handleApiError } from '../../utils';
-import type { ProcessOutput } from '../../types';
+import { executeApiRequest } from '../../utils';
 
 export const processOperations: INodeProperties = {
 	displayName: 'Operation',
@@ -72,17 +71,7 @@ async function refreshPlayer(
 	operation: string
 ): Promise<any> {
 	const endpoint = '/api/processes/player-refresh';
-	
-	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
-			method: 'POST',
-			url: endpoint,
-			returnFullResponse: true,
-		});
+	const response = await executeApiRequest.call(this, 'POST', endpoint);
 
-		const result = response.body as ProcessOutput;
-		return result;
-	} catch (error) {
-		handleApiError.call(this, error, this.getNode(), itemIndex, operation, resource);
-	}
+	return response;
 }
