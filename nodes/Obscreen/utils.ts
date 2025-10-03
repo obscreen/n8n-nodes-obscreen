@@ -1,0 +1,131 @@
+import type { IExecuteFunctions } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+export function buildApiUrl(endpoint: string, params?: Record<string, any>): string {
+	let url = endpoint;
+	
+	if (params) {
+		const queryStringParts: string[] = [];
+		Object.entries(params).forEach(([key, value]) => {
+			if (value !== undefined && value !== null && value !== '') {
+				queryStringParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`);
+			}
+		});
+		
+		if (queryStringParts.length > 0) {
+			url += `?${queryStringParts.join('&')}`;
+		}
+	}
+	
+	return url;
+}
+
+export function isValidCronExpression(cron: string): boolean {
+	const cronFields = cron.split(' ');
+	return cronFields.length >= 6 && cronFields.length <= 7;
+}
+
+export function validateDateTimeFormat(dateTime: string): boolean {
+	// Format: YYYY-MM-DD HH:mm
+	const dateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+	return dateTimeRegex.test(dateTime);
+}
+
+export function validateTimeFormat(time: string): boolean {
+	// Format: HH:mm
+	const timeRegex = /^\d{2}:\d{2}$/;
+	return timeRegex.test(time);
+}
+
+export function validateDayOfWeek(day: number): boolean {
+	return day >= 1 && day <= 7;
+}
+
+export function handleApiError(
+	error: any,
+	node: any,
+	itemIndex: number,
+	operation: string,
+	resource: string
+): never {
+	const errorDescription = `Check your credentials and parameters. The "${resource}" ${operation.toLowerCase()} operation failed.`;
+	
+	const context: any = { itemIndex, resource, operation };
+	
+	if (error.response?.status === 401) {
+		context.contextMessage = 'Invalid API key or instance URL';
+	} else if (error.response?.status === 404) {
+		context.contextMessage = `${resource} not found`;
+	} else if (error.response?.status >= 500) {
+		context.contextMessage = 'Server error - please try again later';
+	}
+	
+	throw new NodeOperationError(node, error, {
+		...context,
+		description: errorDescription,
+	});
+}
+
+export function getResourceFields(resource: string): string[] {
+	const fieldMappings: Record<string, string[]> = {
+		contents: ['id', 'name', 'type', 'location', 'folder_id'],
+		playlists: ['id', 'name', 'enabled', 'loop_mode'],
+		slides: ['id', 'name', 'content_id', 'playlist_id', 'duration', 'position', 'enabled'],
+	};
+	
+	return fieldMappings[resource] || [];
+}
+
+export async function executeApiRequest(
+	this: IExecuteFunctions,
+	method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+	url: string,
+	body?: any,
+	additionalOptions?: Record<string, any>
+): Promise<any> {
+	const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
+	const baseUrl = credentials?.instanceUrl?.replace(/\/$/, ''); // Remove trailing slash if present
+	
+	const options: any = {
+		method,
+		url: `${baseUrl}${url}`,
+		returnFullResponse: true,
+		...additionalOptions,
+	};
+	
+	if (body) {
+		options.body = body;
+	}
+	
+	// Debug logging to see what's being sent
+	this.logger.debug('executeApiRequest called with:', { method, url, options, body, additionalOptions });
+	
+	try {
+		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', options);
+		this.logger.debug('executeApiRequest response:', { response });
+		return response.body;
+	} catch (error) {
+		this.logger.debug('Error in executeApiRequest:', { error, options });
+		throw error;
+	}
+}
+
+export function formatFileUploadError(error: any, filename: string): string {
+	if (error.response?.status === 413) {
+		return `File "${filename}" is too large`;
+	}
+	if (error.response?.status === 415) {
+		return `File "${filename}" has unsupported format`;
+	}
+	return `Failed to upload "${filename}": ${error.message}`;
+}
+
+export function getResourceId(resourceLocatorValue: any): string {
+	if (typeof resourceLocatorValue === 'string') {
+		return resourceLocatorValue;
+	}
+	if (resourceLocatorValue?.value) {
+		return resourceLocatorValue.value;
+	}
+	throw new Error('Invalid resource locator value');
+}
