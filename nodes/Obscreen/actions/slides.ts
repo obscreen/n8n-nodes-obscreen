@@ -56,6 +56,12 @@ export const slideOperations: INodeProperties = {
 			action: 'Get slide',
 		},
 		{
+			name: 'Get Many',
+			value: 'getAll',
+			description: 'Retrieve a list of slides',
+			action: 'Get many slides',
+		},
+		{
 			name: 'Update',
 			value: 'update',
 			description: 'Update an existing slide',
@@ -85,6 +91,16 @@ export const slideParameters: INodeProperties[] = [
 		default: { mode: 'id', value: '' },
 		required: true,
 		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: 'Select a slide...',
+				typeOptions: {
+					searchListMethod: 'searchSlides',
+					searchable: true,
+				},
+			},
 			{
 				displayName: 'ID',
 				name: 'id',
@@ -442,6 +458,11 @@ export const slideParameters: INodeProperties[] = [
 	},
 ];
 
+async function getAllSlides(this: IExecuteFunctions, itemIndex: number): Promise<any> {
+	const endpoint = '/api/slides';
+	return await executeApiRequest.call(this, 'GET', endpoint);
+}
+
 export async function executeSlideOperation(
 	this: IExecuteFunctions,
 	item: INodeExecutionData,
@@ -453,15 +474,16 @@ export async function executeSlideOperation(
 		const returnData = [];
 
 		for (let i = 0; i < this.getInputData().length; i++) {
-			const resourceOperations: Record<string, Function> = {
-				create: createSlide.bind(this),
-				createNotification: createSlideNotification.bind(this),
-				delete: deleteSlide.bind(this),
-				get: getSlide.bind(this),
-				update: updateSlide.bind(this),
-				updateNotification: updateSlideNotification.bind(this),
-				updatePositions: updateSlidePositions.bind(this),
-			};
+		const resourceOperations: Record<string, Function> = {
+			create: createSlide.bind(this),
+			createNotification: createSlideNotification.bind(this),
+			delete: deleteSlide.bind(this),
+			get: getSlide.bind(this),
+			getAll: getAllSlides.bind(this),
+			update: updateSlide.bind(this),
+			updateNotification: updateSlideNotification.bind(this),
+			updatePositions: updateSlidePositions.bind(this),
+		};
 
 			const operationFunction = resourceOperations[operation];
 			if (!operationFunction) {
