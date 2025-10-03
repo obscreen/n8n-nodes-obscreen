@@ -1,5 +1,5 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
-import { executeApiRequest } from '../utils';
+import { executeApiRequest, getResourceId } from '../../utils';
 
 export const contentFolderOperations: INodeProperties = {
     displayName: 'Operation',
@@ -91,7 +91,7 @@ export const contentFolderParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['contentFolders'],
-				operation: ['deleteFolder'],
+				operation: ['createFolder', 'deleteFolder'],
 			},
 		},
 	},
@@ -100,11 +100,13 @@ export const contentFolderParameters: INodeProperties[] = [
 async function createContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
+	const folderId = this.getNodeParameter('folderId', itemIndex, '') as any;
 	
 	const endpoint = '/api/contents/folders';
 	const body = {
 		name,
 		path,
+		folder_id: getResourceId(folderId),
 	};
 	
 	return await executeApiRequest.call(this, 'POST', endpoint, body);

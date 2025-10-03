@@ -8,17 +8,11 @@ import {
 	validateDateTimeFormat,
 	validateTimeFormat,
 	validateDayOfWeek
-} from '../utils';
-import type { SlidePositions } from '../types';
+} from '../../utils';
+import type { SlidePositions } from '../../types';
+import { searchSlides } from './search';
 
-export const slideFields: INodeProperties = {
-	displayName: 'Options',
-	name: 'options',
-	type: 'collection',
-	placeholder: 'Add Option',
-	default: {},
-	options: [],
-};
+export const searchSlidesMethod = searchSlides;
 
 export const slideOperations: INodeProperties = {
 	displayName: 'Operation',

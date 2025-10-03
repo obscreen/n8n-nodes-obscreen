@@ -1,16 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { handleApiError } from '../utils';
-import type { ProcessOutput } from '../types';
-
-export const processFields: INodeProperties = {
-	displayName: 'Options',
-	name: 'options',
-	type: 'collection',
-	placeholder: 'Add Option',
-	default: {},
-	options: [],
-};
+import { handleApiError } from '../../utils';
+import type { ProcessOutput } from '../../types';
 
 export const processOperations: INodeProperties = {
 	displayName: 'Operation',
