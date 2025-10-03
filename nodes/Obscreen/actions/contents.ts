@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
+import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { buildApiUrl, executeApiRequest, getResourceId } from '../utils';
 import type { BulkUploadResult } from '../types';
@@ -117,7 +117,7 @@ export const contentParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['contents'],
-				operation: ['create', 'createFolder', 'deleteFolder', 'getAll', 'update'],
+				operation: ['create', 'createFolder', 'deleteFolder', 'getAll', 'moveToFolder', 'update'],
 			},
 		},
 	},
@@ -270,27 +270,45 @@ export const contentParameters: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Content',
-		name: 'contentId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
+		displayName: 'Contents',
+		name: 'contentCollection',
+		placeholder: 'Add Content',
+		type: 'fixedCollection',
+		default: {},
+		typeOptions: {
+			multipleValues: true,
+		},
+		options: [
 			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a content...',
-				typeOptions: {
-					searchListMethod: 'searchContents',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 456',
+				name: 'contentIds',
+				displayName: 'Contents',
+				values: [
+					{
+						displayName: 'Content',
+						name: 'contentId',
+						type: 'resourceLocator',
+						default: { mode: 'list', value: '' },
+						required: true,
+						modes: [
+							{
+								displayName: 'From List',
+								name: 'list',
+								type: 'list',
+								placeholder: 'Select a content...',
+								typeOptions: {
+									searchListMethod: 'searchContents',
+									searchable: true,
+								},
+							},
+							{
+								displayName: 'ID',
+								name: 'id',
+								type: 'string',
+								placeholder: 'e.g. 456',
+							},
+						],
+					},
+				],
 			},
 		],
 		displayOptions: {
@@ -300,8 +318,52 @@ export const contentParameters: INodeProperties[] = [
 			},
 		},
 	},
+	{
+		displayName: 'Fields',
+		name: 'fields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			resourceMapper: {
+				resourceMapperMethod: 'contentMappingColumns',
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['update'],
+			},
+		},
+	},
 ];
 
+export async function contentMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+	return {
+		fields: [
+			{
+				id: 'name',
+				displayName: 'Name',
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				required: false,
+				display: true,
+				type: 'string',
+			},
+		],
+	};
+}
 
 export async function executeContentOperation(
 	this: IExecuteFunctions,
@@ -362,7 +424,7 @@ async function createContent(
 	const location = this.getNodeParameter('location', itemIndex, 'url') as string;
 
 	const endpoint = '/api/contents/';
-	const url = buildApiUrl(endpoint, { name, type, path, folder_id: folderId, location });
+	const url = buildApiUrl(endpoint, { name, type, path, folder_id: getResourceId(folderId), location });
 
 	let body: any = {};
 	
@@ -422,7 +484,7 @@ async function getAllContents(
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
 
 	const endpoint = '/api/contents/';
-	const url = buildApiUrl(endpoint, { path, folder_id: folderId });
+	const url = buildApiUrl(endpoint, { path, folder_id: getResourceId(folderId) });
 
 	const response = await executeApiRequest.call(this, 'GET', url);
 	return response;
@@ -448,8 +510,11 @@ async function moveContentToFolder(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
-	const contentId = getResourceId(contentIdValue);
+	const contentCollection = this.getNodeParameter('contentCollection', itemIndex, []) as any;
+	const contentIds = contentCollection['contentIds'].map((item: any) => {
+		return parseInt(getResourceId(item['contentId']));
+	});
+
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as number;
 
@@ -457,8 +522,9 @@ async function moveContentToFolder(
 	const url = buildApiUrl(endpoint, { path });
 
 	const body = {
-		entity_ids: contentId,
-		folder_id: folderId,
+		entity_ids: contentIds,
+		folder_id: getResourceId(folderId),
+		path: path,
 	};
 
 	const response = await executeApiRequest.call(this, 'POST', url, body);
@@ -473,10 +539,17 @@ async function updateContent(
 ): Promise<any> {
 	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
 	const contentId = getResourceId(contentIdValue);
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
+
+	const params: Record<string, string> = {};
+	
+	// Map the fields from Resource Mapper to API parameters
+	if (fields.name !== undefined && fields.name !== '') {
+		params.name = fields.name;
+	}
 
 	const endpoint = `/api/contents/${contentId}`;
-	const url = buildApiUrl(endpoint, { name });
+	const url = buildApiUrl(endpoint, params);
 
 	const response = await executeApiRequest.call(this, 'PUT', url);
 	return response;
