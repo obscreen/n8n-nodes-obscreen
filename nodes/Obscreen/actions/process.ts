@@ -26,7 +26,7 @@ export const processOperations: INodeProperties = {
 		{
 			name: 'Refresh Player',
 			value: 'refreshPlayer',
-			description: 'Refresh the player to apply changes',
+			description: 'Refresh player to apply changes',
 			action: 'Refresh player',
 		},
 	],

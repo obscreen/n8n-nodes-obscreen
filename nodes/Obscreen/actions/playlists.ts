@@ -25,13 +25,13 @@ export const playlistOperations: INodeProperties = {
 		{
 			name: 'Create',
 			value: 'create',
-			description: 'Create a new playlist',
+			description: 'Create new playlist',
 			action: 'Create playlist',
 		},
 		{
 			name: 'Delete',
 			value: 'delete',
-			description: 'Delete a playlist permanently',
+			description: 'Delete playlist permanently',
 			action: 'Delete playlist',
 		},
 		{
@@ -43,25 +43,25 @@ export const playlistOperations: INodeProperties = {
 		{
 			name: 'Get Many',
 			value: 'getAll',
-			description: 'Retrieve a list of playlists',
+			description: 'Retrieve list of playlists',
 			action: 'Get many playlists',
 		},
 		{
 			name: 'Get Notifications',
 			value: 'getNotifications',
-			description: 'Get notifications associated with a playlist',
+			description: 'Get notifications associated with playlist',
 			action: 'Get playlist notifications',
 		},
 		{
 			name: 'Get Slides',
 			value: 'getSlides',
-			description: 'Get slides associated with a playlist',
+			description: 'Get slides associated with playlist',
 			action: 'Get playlist slides',
 		},
 		{
 			name: 'Update',
 			value: 'update',
-			description: 'Update an existing playlist',
+			description: 'Update playlist',
 			action: 'Update playlist',
 		},
 	],

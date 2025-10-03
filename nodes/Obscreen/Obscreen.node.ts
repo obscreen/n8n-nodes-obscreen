@@ -10,10 +10,12 @@ import { NodeOperationError } from 'n8n-workflow';
 
 // Import actions from modular structure
 import { contentOperations, contentParameters, executeContentOperation } from './actions/contents';
+import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation } from './actions/contentFolders';
 import { playlistOperations, playlistParameters, executePlaylistOperation } from './actions/playlists';
 import { slideOperations, slideParameters, executeSlideOperation } from './actions/slides';
 import { processOperations, processParameters, executeProcessOperation } from './actions/process';
 
+const SEARCH_LIMIT = 50;
 
 export class Obscreen implements INodeType {
 	description: INodeTypeDescription = {
@@ -47,27 +49,33 @@ export class Obscreen implements INodeType {
 						value: 'contents',
 					},
 					{
+						name: 'Content Folder',
+						value: 'contentFolders',
+					},
+					{
 						name: 'Playlist',
 						value: 'playlists',
 					},
 					{
-						name: 'Slide',
-						value: 'slides',
-					},
-					{
 						name: 'Process',
 						value: 'process',
+					},
+					{
+						name: 'Slide',
+						value: 'slides',
 					},
 				],
 				default: 'contents',
 			},
 			// Dynamic operation options based on resource selection
 			contentOperations,
+			contentFolderOperations,
 			playlistOperations,
 			slideOperations,
 			processOperations,
 			// Dynamic parameters based on resource and operation selections
 			...contentParameters,
+			...contentFolderParameters,
 			...playlistParameters,
 			...slideParameters,
 			...processParameters,
@@ -111,7 +119,7 @@ export class Obscreen implements INodeType {
 				}));
 				
 				return {
-					results: results.slice(0, 50), // Limit to 50 results
+					results: results.slice(0, SEARCH_LIMIT),
 				};
 			},
 			async searchContents(
@@ -149,7 +157,83 @@ export class Obscreen implements INodeType {
 				}));
 				
 				return {
-					results: results.slice(0, 50), // Limit to 50 results
+					results: results.slice(0, SEARCH_LIMIT),
+				};
+			},
+			async searchFolders(
+				this: ILoadOptionsFunctions,
+				query?: string,
+			): Promise<INodeListSearchResult> {
+				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
+				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
+				
+				const endpoint = '/api/contents/folders';
+				const fullUrl = `${baseUrl}${endpoint}`;
+				
+				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
+					method: 'GET',
+					url: fullUrl,
+					returnFullResponse: true,
+				});
+				
+				const folders = Array.isArray(response.body) ? response.body : [];
+				
+				// Filter folders based on query if provided
+				let filteredFolders = folders;
+				if (query) {
+					filteredFolders = folders.filter((folder: any) => 
+						folder.name?.toLowerCase().includes(query.toLowerCase())
+					);
+				}
+				
+				// Format results for listSearch
+				const results = filteredFolders.map((folder: any) => ({
+					name: folder.name || `Folder ${folder.id}`,
+					value: folder.id,
+					description: folder.path || '',
+					url: folder.url || '',
+				}));
+				
+				return {
+					results: results.slice(0, SEARCH_LIMIT),
+				};
+			},
+			async searchSlides(
+				this: ILoadOptionsFunctions,
+				query?: string,
+			): Promise<INodeListSearchResult> {
+				const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
+				const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
+				
+				const endpoint = '/api/slides';
+				const fullUrl = `${baseUrl}${endpoint}`;
+				
+				const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
+					method: 'GET',
+					url: fullUrl,
+					returnFullResponse: true,
+				});
+				
+				const slides = Array.isArray(response.body) ? response.body : [];
+				
+				// Filter slides based on query if provided (search by label)
+				let filteredSlides = slides;
+				if (query) {
+					filteredSlides = slides.filter((slide: any) => 
+						slide.label?.toLowerCase().includes(query.toLowerCase())
+					);
+				}
+				
+				// Format results for listSearch
+				const results = filteredSlides.map((slide: any) => ({
+					name: slide.label || `Slide ${slide.id}`,
+					value: slide.id,
+					description: slide.description || '',
+					url: slide.url || '',
+				}));
+				
+				return {
+					results: results.slice(0, SEARCH_LIMIT),
 				};
 			},
 		},
@@ -170,6 +254,9 @@ export class Obscreen implements INodeType {
 				switch (resource) {
 					case 'contents':
 						operationResult = await executeContentOperation.call(this, items[i], i, resource, operation);
+						break;
+					case 'contentFolders':
+						operationResult = await executeContentFolderOperation.call(this, items[i], i, resource, operation);
 						break;
 					case 'playlists':
 						operationResult = await executePlaylistOperation.call(this, items[i], i, resource, operation);

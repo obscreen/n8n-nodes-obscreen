@@ -30,22 +30,10 @@ export const contentOperations: INodeProperties = {
 			action: 'Create content',
 		},
 		{
-			name: 'Create Folder',
-			value: 'createFolder',
-			description: 'Create a new folder',
-			action: 'Create folder',
-		},
-		{
 			name: 'Delete',
 			value: 'delete',
 			description: 'Delete content permanently',
 			action: 'Delete content',
-		},
-		{
-			name: 'Delete Folder',
-			value: 'deleteFolder',
-			description: 'Delete a folder permanently',
-			action: 'Delete folder',
 		},
 		{
 			name: 'Get',
@@ -134,12 +122,28 @@ export const contentParameters: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Folder ID',
+		displayName: 'Folder',
 		name: 'folderId',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 456',
-		description: 'Folder identifier',
+		type: 'resourceLocator',
+		default: { mode: 'list', value: '' },
+		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: 'Select a folder...',
+				typeOptions: {
+					searchListMethod: 'searchFolders',
+					searchable: true,
+				},
+			},
+			{
+				displayName: 'ID',
+				name: 'id',
+				type: 'string',
+				placeholder: 'e.g. 456',
+			},
+		],
 		displayOptions: {
 			show: {
 				resource: ['contents'],
@@ -266,12 +270,29 @@ export const contentParameters: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Content IDs',
-		name: 'entityIds',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 1,2,3 or {{ $json.content_id }}',
-		description: 'Comma-separated list of content IDs to move',
+		displayName: 'Content',
+		name: 'contentId',
+		type: 'resourceLocator',
+		default: { mode: 'list', value: '' },
+		required: true,
+		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: 'Select a content...',
+				typeOptions: {
+					searchListMethod: 'searchContents',
+					searchable: true,
+				},
+			},
+			{
+				displayName: 'ID',
+				name: 'id',
+				type: 'string',
+				placeholder: 'e.g. 456',
+			},
+		],
 		displayOptions: {
 			show: {
 				resource: ['contents'],
@@ -280,6 +301,7 @@ export const contentParameters: INodeProperties[] = [
 		},
 	},
 ];
+
 
 export async function executeContentOperation(
 	this: IExecuteFunctions,
@@ -292,18 +314,16 @@ export async function executeContentOperation(
 		const returnData = [];
 
 		for (let i = 0; i < this.getInputData().length; i++) {
-			const resourceOperations: Record<string, Function> = {
-				create: createContent.bind(this),
-				createFolder: createContentFolder.bind(this),
-				delete: deleteContent.bind(this),
-				deleteFolder: deleteContentFolder.bind(this),
-				get: getContent.bind(this),
-				getAll: getAllContents.bind(this),
-				getLocation: getContentLocation.bind(this),
-				moveToFolder: moveContentToFolder.bind(this),
-				update: updateContent.bind(this),
-				uploadBulk: uploadBulkContent.bind(this),
-			};
+		const resourceOperations: Record<string, Function> = {
+			create: createContent.bind(this),
+			delete: deleteContent.bind(this),
+			get: getContent.bind(this),
+			getAll: getAllContents.bind(this),
+			getLocation: getContentLocation.bind(this),
+			moveToFolder: moveContentToFolder.bind(this),
+			update: updateContent.bind(this),
+			uploadBulk: uploadBulkContent.bind(this),
+		};
 
 			const operationFunction = resourceOperations[operation];
 			if (!operationFunction) {
@@ -362,22 +382,6 @@ async function createContent(
 	return response;
 }
 
-async function createContentFolder(
-	this: IExecuteFunctions,
-	itemIndex: number,
-	resource: string,
-	operation: string
-): Promise<any> {
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const path = this.getNodeParameter('path', itemIndex, '') as string;
-	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
-
-	const endpoint = '/api/contents/folder';
-	const url = buildApiUrl(endpoint, { name, path, folder_id: folderId });
-
-	const response = await executeApiRequest.call(this, 'POST', url);
-	return response;
-}
 
 async function deleteContent(
 	this: IExecuteFunctions,
@@ -393,21 +397,6 @@ async function deleteContent(
 	return { deleted: true };
 }
 
-async function deleteContentFolder(
-	this: IExecuteFunctions,
-	itemIndex: number,
-	resource: string,
-	operation: string
-): Promise<any> {
-	const path = this.getNodeParameter('path', itemIndex, '') as string;
-	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
-
-	const endpoint = '/api/contents/folder';
-	const url = buildApiUrl(endpoint, { path, folder_id: folderId });
-
-	await executeApiRequest.call(this, 'DELETE', url);
-	return { deleted: true };
-}
 
 async function getContent(
 	this: IExecuteFunctions,
@@ -459,16 +448,16 @@ async function moveContentToFolder(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const entityIds = this.getNodeParameter('entityIds', itemIndex, '') as string;
+	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
+	const contentId = getResourceId(contentIdValue);
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as number;
 
-	const contentIds = entityIds.split(',').map(id => parseInt(id.trim(), 10));
 	const endpoint = '/api/contents/folder/move-bulk';
 	const url = buildApiUrl(endpoint, { path });
 
 	const body = {
-		entity_ids: contentIds,
+		entity_ids: contentId,
 		folder_id: folderId,
 	};
 
