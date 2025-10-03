@@ -30,40 +30,35 @@ export const contentFolderOperations: INodeProperties = {
             description: 'Retrieve a list of content folders',
             action: 'Get many content folders',
         },
+        {
+            name: 'Update Folder',
+            value: 'updateFolder',
+            description: 'Update a content folder',
+            action: 'Update content folder',
+        },
     ],
     default: 'getAllFolders',
 };
 
 export const contentFolderParameters: INodeProperties[] = [
+	/** Folder Name */
 	{
 		displayName: 'Folder Name',
 		name: 'name',
 		type: 'string',
 		default: '',
 		placeholder: 'e.g. My Folder',
-		description: 'Name of the folder to create',
+		description: 'Name of the folder',
 		displayOptions: {
 			show: {
 				resource: ['contentFolders'],
-				operation: ['createFolder'],
-			},
-		},
-		required: true,
-	},
-	{
-		displayName: 'Folder Path',
-		name: 'path',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. /drive/MyFolder',
-		description: 'Path where the folder should be created',
-		displayOptions: {
-			show: {
-				resource: ['contentFolders'],
-				operation: ['createFolder'],
+				operation: ['createFolder', 'updateFolder'],
 			},
 		},
 	},
+	/**
+	 * Folder Selector
+	 */
 	{
 		displayName: 'Folder',
 		name: 'folderId',
@@ -91,40 +86,44 @@ export const contentFolderParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['contentFolders'],
-				operation: ['createFolder', 'deleteFolder'],
+				operation: [ 'deleteFolder', 'updateFolder'],
+			},
+		},
+	},
+	/**
+	 * Parent Folder Selector
+	 */
+	{
+		displayName: 'Parent Folder',
+		name: 'parentFolderId',
+		type: 'resourceLocator',
+		default: { mode: 'list', value: '' },
+		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: 'Select a parent folder...',
+				typeOptions: {
+					searchListMethod: 'searchFolders',
+					searchable: true,
+				},
+			},
+			{
+				displayName: 'ID',
+				name: 'id',
+				type: 'string',
+				placeholder: 'e.g. 456',
+			},
+		],
+		displayOptions: {
+			show: {
+				resource: ['contentFolders'],
+				operation: ['createFolder'],
 			},
 		},
 	},
 ];
-
-async function createContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const path = this.getNodeParameter('path', itemIndex, '') as string;
-	const folderId = this.getNodeParameter('folderId', itemIndex, '') as any;
-	
-	const endpoint = '/api/contents/folders';
-	const body = {
-		name,
-		path,
-		folder_id: getResourceId(folderId),
-	};
-	
-	return await executeApiRequest.call(this, 'POST', endpoint, body);
-}
-
-async function deleteContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-	const folderIdValue = this.getNodeParameter('folderId', itemIndex, '') as any;
-	const folderId = folderIdValue.mode === 'list' ? folderIdValue.value : folderIdValue.value;
-	
-	const endpoint = `/api/contents/folders/${folderId}`;
-	await executeApiRequest.call(this, 'DELETE', endpoint);
-	return { deleted: true };
-}
-
-async function getAllContentFolders(this: IExecuteFunctions, itemIndex: number): Promise<any> {
-	const endpoint = '/api/contents/folders';
-	return await executeApiRequest.call(this, 'GET', endpoint);
-}
 
 export async function executeContentFolderOperation(
 	this: IExecuteFunctions,
@@ -141,6 +140,7 @@ export async function executeContentFolderOperation(
 				createFolder: createContentFolder.bind(this),
 				deleteFolder: deleteContentFolder.bind(this),
 				getAllFolders: getAllContentFolders.bind(this),
+				updateFolder: updateContentFolder.bind(this),
 			};
 
 			const operationFunction = resourceOperations[operation];
@@ -159,4 +159,42 @@ export async function executeContentFolderOperation(
 	} catch (error) {
 		throw error;
 	}
+}
+
+async function createContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	const parentFolderId = this.getNodeParameter('parentFolderId', itemIndex, '') as any;
+	
+	const endpoint = '/api/contents/folders';
+	const body = {
+		name,
+		folder_id: getResourceId(parentFolderId),
+	};
+	
+	return await executeApiRequest.call(this, 'POST', endpoint, body);
+}
+
+async function deleteContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
+	const folderId = this.getNodeParameter('folderId', itemIndex, '') as any;
+	
+	const endpoint = `/api/contents/folders/${folderId}`;
+	await executeApiRequest.call(this, 'DELETE', endpoint);
+	return { deleted: true };
+}
+
+async function getAllContentFolders(this: IExecuteFunctions, itemIndex: number): Promise<any> {
+	const endpoint = '/api/contents/folders';
+	return await executeApiRequest.call(this, 'GET', endpoint);
+}
+
+async function updateContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
+	const folderId = this.getNodeParameter('folderId', itemIndex, '') as any;
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	
+	const endpoint = `/api/contents/folders/${folderId}`;
+	const body = {
+		name,
+		folder_id: getResourceId(folderId),
+	};
+	return await executeApiRequest.call(this, 'PUT', endpoint, body);
 }

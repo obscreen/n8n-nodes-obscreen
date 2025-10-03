@@ -64,6 +64,21 @@ export const playlistOperations: INodeProperties = {
 };
 
 export const playlistParameters: INodeProperties[] = [
+	/** Playlist Name */
+	{
+		displayName: 'Playlist Name',
+		name: 'name',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. My Playlist',
+		description: 'Name of the playlist',
+		displayOptions: {
+			show: {
+				resource: ['playlists'],
+				operation: ['create'],
+			},
+		},
+	},
 	/**
 	 * Playlist Selector
 	 */
@@ -167,7 +182,6 @@ export const playlistParameters: INodeProperties[] = [
 export async function playlistCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 	return {
 		fields: [
-			{...playlistMappings.NAME, required: true},
 			playlistMappings.LOOP_MODE,
 			playlistMappings.ENABLED,
 		],
@@ -235,13 +249,13 @@ async function createPlaylist(
 	resource: string,
 	operation: string
 ): Promise<any> {
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, string> = {};
+	const params: Record<string, string> = {
+		name,
+	};
 
-	if (fields.name !== undefined && fields.name !== '') {
-		params.name = fields.name;
-	}
 	if (fields.enabled !== undefined) {
 		params.enabled = fields.enabled.toString();
 	}
