@@ -7,10 +7,10 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 // Import actions from modular structure
-import { contentOperations, contentParameters, executeContentOperation, contentMappingColumns, searchContentsMethod } from './actions/content/contents';
-import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation } from './actions/contentFolder/contentFolders';
-import { playlistOperations, playlistParameters, executePlaylistOperation, playlistCreateMappingColumns, playlistUpdateMappingColumns, searchPlaylistsMethod } from './actions/playlist/playlists';
-import { slideOperations, slideParameters, executeSlideOperation, slideMappingColumns, searchSlidesMethod } from './actions/slide/slides';
+import { contentOperations, contentParameters, executeContentOperation, contentCreateMappingColumns, contentUpdateMappingColumns, searchContents } from './actions/content/contents';
+import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation, searchFolders } from './actions/contentFolder/contentFolders';
+import { playlistOperations, playlistParameters, executePlaylistOperation, playlistCreateMappingColumns, playlistUpdateMappingColumns, searchPlaylists } from './actions/playlist/playlists';
+import { slideOperations, slideParameters, executeSlideOperation, slideCreateMappingColumns, slideUpdateMappingColumns, searchSlides } from './actions/slide/slides';
 import { processOperations, processParameters, executeProcessOperation } from './actions/process/process';
 
 export class Obscreen implements INodeType {
@@ -80,15 +80,18 @@ export class Obscreen implements INodeType {
 
 	methods = {
 		listSearch: {
-			searchPlaylists: searchPlaylistsMethod,
-			searchContents: searchContentsMethod,
-			searchSlides: searchSlidesMethod,
+			searchPlaylists,
+			searchContents,
+			searchSlides,
+			searchFolders,
 		},
 		resourceMapping: {
-			playlistCreateMappingColumns: playlistCreateMappingColumns,
-			playlistUpdateMappingColumns: playlistUpdateMappingColumns,
-			slideMappingColumns,
-			contentMappingColumns,
+			playlistCreateMappingColumns,
+			playlistUpdateMappingColumns,
+			slideCreateMappingColumns,
+			slideUpdateMappingColumns,
+			contentCreateMappingColumns,
+			contentUpdateMappingColumns,
 		},
 	};
 

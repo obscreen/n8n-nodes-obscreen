@@ -84,22 +84,26 @@ export async function executeApiRequest(
 	additionalOptions?: Record<string, any>
 ): Promise<any> {
 	const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
-	const baseUrl = credentials?.instanceUrl?.replace(/\/$/, ''); // Remove trailing slash if present
-	
+	const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '');
+
 	const options: any = {
 		method,
 		url: `${baseUrl}${url}`,
 		returnFullResponse: true,
+		json: true,
+		headers: {
+			'Content-Type': 'application/json',
+			...(additionalOptions?.headers || {}),
+		},
 		...additionalOptions,
 	};
-	
+
 	if (body) {
 		options.body = body;
 	}
-	
-	// Debug logging to see what's being sent
+
 	this.logger.debug('executeApiRequest called with:', { method, url, options, body, additionalOptions });
-	
+
 	try {
 		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', options);
 		this.logger.debug('executeApiRequest response:', { response });
@@ -127,5 +131,6 @@ export function getResourceId(resourceLocatorValue: any): string {
 	if (resourceLocatorValue?.value) {
 		return resourceLocatorValue.value;
 	}
+
 	throw new Error('Invalid resource locator value');
 }

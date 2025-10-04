@@ -9,10 +9,9 @@ import {
 	validateTimeFormat,
 	validateDayOfWeek
 } from '../../utils';
+import { slideMappings } from './mappings';
 import type { SlidePositions } from '../../types';
-import { searchSlides } from './search';
-
-export const searchSlidesMethod = searchSlides;
+export { searchSlides } from './search';
 
 export const slideOperations: INodeProperties = {
 	displayName: 'Operation',
@@ -78,6 +77,9 @@ export const slideOperations: INodeProperties = {
 };
 
 export const slideParameters: INodeProperties[] = [
+	/**
+	 * Slide Selector
+	 */
 	{
 		displayName: 'Slide',
 		name: 'slideId',
@@ -109,6 +111,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Content Selector
+	 */
 	{
 		displayName: 'Content',
 		name: 'contentId',
@@ -140,6 +145,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Playlist Selector
+	 */
 	{
 		displayName: 'Playlist',
 		name: 'playlistId',
@@ -171,6 +179,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Enabled
+	 */
 	{
 		displayName: 'Enabled',
 		name: 'enabled',
@@ -184,6 +195,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Duration
+	 */
 	{
 		displayName: 'Duration',
 		name: 'duration',
@@ -197,6 +211,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Position
+	 */
 	{
 		displayName: 'Position',
 		name: 'position',
@@ -210,6 +227,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Delegate Duration
+	 */
 	{
 		displayName: 'Delegate Duration',
 		name: 'delegateDuration',
@@ -226,6 +246,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Scheduling Type
+	 */
 	{
 		displayName: 'Scheduling Type',
 		name: 'scheduling',
@@ -259,6 +282,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Notification Scheduling Type
+	 */
 	{
 		displayName: 'Notification Scheduling Type',
 		name: 'notificationScheduling',
@@ -284,7 +310,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
-	// Date Time scheduling
+	/**
+	 * Date Time scheduling
+	 */
 	{
 		displayName: 'Start Date Time',
 		name: 'datetimeStart',
@@ -300,6 +328,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * End Date Time
+	 */
 	{
 		displayName: 'End Date Time',
 		name: 'datetimeEnd',
@@ -315,6 +346,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Notification Start Date Time
+	 */
 	{
 		displayName: 'Notification Start Date Time',
 		name: 'datetimeStart',
@@ -330,6 +364,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Notification End Date Time
+	 */
 	{
 		displayName: 'Notification End Date Time',
 		name: 'datetimeEnd',
@@ -345,7 +382,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
-	// Cron scheduling for notifications
+	/**
+	 * Cron scheduling for notifications
+	 */
 	{
 		displayName: 'Cron Start Expression',
 		name: 'cronStart',
@@ -361,6 +400,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Cron End Expression
+	 */
 	{
 		displayName: 'Cron End Expression',
 		name: 'cronEnd',
@@ -376,7 +418,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
-	// In week scheduling
+	/**
+	 * In week scheduling
+	 */
 	{
 		displayName: 'Start Day',
 		name: 'dayStart',
@@ -391,6 +435,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Start Time
+	 */
 	{
 		displayName: 'Start Time',
 		name: 'timeStart',
@@ -406,6 +453,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * End Day
+	 */
 	{
 		displayName: 'End Day',
 		name: 'dayEnd',
@@ -420,6 +470,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * End Time
+	 */
 	{
 		displayName: 'End Time',
 		name: 'timeEnd',
@@ -435,7 +488,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
-	// Update positions
+	/**
+	 * Update positions
+	 */
 	{
 		displayName: 'Slide Positions',
 		name: 'positions',
@@ -450,6 +505,9 @@ export const slideParameters: INodeProperties[] = [
 			},
 		},
 	},
+	/**
+	 * Fields for Create
+	 */
 	{
 		displayName: 'Fields',
 		name: 'fields',
@@ -461,7 +519,39 @@ export const slideParameters: INodeProperties[] = [
 		required: true,
 		typeOptions: {
 			resourceMapper: {
-				resourceMapperMethod: 'slideMappingColumns',
+				resourceMapperMethod: 'slideCreateMappingColumns',
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: true,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create'],
+			},
+		},
+	},
+	/**
+	 * Fields for Update
+	 */
+	{
+		displayName: 'Fields',
+		name: 'fields',
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			resourceMapper: {
+				resourceMapperMethod: 'slideUpdateMappingColumns',
 				mode: 'add',
 				fieldWords: {
 					singular: 'field',
@@ -481,71 +571,40 @@ export const slideParameters: INodeProperties[] = [
 	},
 ];
 
-export async function slideMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+export async function slideCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 	return {
 		fields: [
-			{
-				id: 'enabled',
-				displayName: 'Enabled',
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				required: false,
-				display: true,
-				type: 'boolean',
-			},
-			{
-				id: 'duration',
-				displayName: 'Duration',
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				required: false,
-				display: true,
-				type: 'number',
-			},
-			{
-				id: 'position',
-				displayName: 'Position',
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				required: false,
-				display: true,
-				type: 'number',
-			},
-			{
-				id: 'delegateDuration',
-				displayName: 'Delegate Duration',
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				required: false,
-				display: true,
-				type: 'boolean',
-			},
-			{
-				id: 'scheduling',
-				displayName: 'Scheduling Type',
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				required: false,
-				display: true,
-				type: 'options',
-				options: [
-					{
-						name: 'Loop',
-						value: 'loop',
-					},
-					{
-						name: 'Date Time',
-						value: 'datetime',
-					},
-					{
-						name: 'In Week',
-						value: 'inweek',
-					},
-				],
-			},
+			slideMappings.ENABLED,
+			slideMappings.DURATION,
+			slideMappings.POSITION,
+			slideMappings.DELEGATE_DURATION,
+			slideMappings.SCHEDULING,
+			slideMappings.DATETIME_START,
+			slideMappings.DATETIME_END,
+			slideMappings.DAY_START,
+			slideMappings.TIME_START,
+			slideMappings.DAY_END,
+			slideMappings.TIME_END,
 		],
 	};
 }
+
+export async function slideUpdateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
+	return {
+		fields: [
+			slideMappings.ENABLED,
+			slideMappings.DURATION,
+			slideMappings.POSITION,
+			slideMappings.DELEGATE_DURATION,
+			slideMappings.DATETIME_START,
+			slideMappings.DATETIME_END,
+			slideMappings.DAY_START,
+			slideMappings.TIME_START,
+			slideMappings.DAY_END,
+			slideMappings.TIME_END,
+		],
+	};
+};
 
 async function getAllSlides(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const endpoint = '/api/slides';
