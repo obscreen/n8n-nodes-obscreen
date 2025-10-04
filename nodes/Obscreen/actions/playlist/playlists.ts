@@ -1,10 +1,8 @@
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { playlistMappings } from './mappings';
-import { buildApiUrl, executeApiRequest, getResourceId } from '../../utils';
-import { searchPlaylists } from './search';
-
-export const searchPlaylistsMethod = searchPlaylists;
+import { executeApiRequest, getResourceId } from '../../utils';
+export { searchPlaylists } from './search';
 
 export const playlistOperations: INodeProperties = {
 	displayName: 'Operation',
@@ -252,21 +250,20 @@ async function createPlaylist(
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, string> = {
+	const body: Record<string, any> = {
 		name,
 	};
 
 	if (fields.enabled !== undefined) {
-		params.enabled = fields.enabled.toString();
+		body.enabled = fields.enabled;
 	}
 	if (fields.loopMode !== undefined) {
-		params.loop_mode = fields.loopMode;
+		body.loop_mode = fields.loopMode;
 	}
 
 	const endpoint = '/api/playlists/';
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'POST', url);
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
 	return response;
 }
 
@@ -305,7 +302,7 @@ async function getAllPlaylists(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const endpoint = '/api/playlists';
+	const endpoint = '/api/playlists/';
 	const response = await executeApiRequest.call(this, 'GET', endpoint);
 
 	return response;
@@ -349,22 +346,21 @@ async function updatePlaylist(
 	const playlistId = getResourceId(playlistIdValue);
 	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, string> = {};
-	
-	// Map the fields from Resource Mapper to API parameters
+	const body: Record<string, any> = {};
+
+	// Map the fields from Resource Mapper to API body
 	if (fields.name !== undefined && fields.name !== '') {
-		params.name = fields.name;
+		body.name = fields.name;
 	}
 	if (fields.enabled !== undefined) {
-		params.enabled = fields.enabled.toString();
+		body.enabled = fields.enabled;
 	}
 	if (fields.loopMode !== undefined) {
-		params.loop_mode = fields.loopMode;
+		body.loop_mode = fields.loopMode;
 	}
 
 	const endpoint = `/api/playlists/${playlistId}`;
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'PUT', url);
+	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
 	return response;
 }
