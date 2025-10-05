@@ -66,6 +66,7 @@ export const contentFolderParameters: INodeProperties[] = [
 	 * Folder Selector
 	 */
 	newResourceLocator({
+		displayName: 'Folder',
 		name: 'folderId',
 		label: 'folder',
 		searchListMethod: 'searchFolders',
@@ -93,6 +94,7 @@ export const contentFolderParameters: INodeProperties[] = [
 	 * Parent Folder Selector
 	 */
 	newResourceLocator({
+		displayName: 'Parent Folder',
 		name: 'parentFolderId',
 		label: 'parent folder',
 		searchListMethod: 'searchFolders',
@@ -119,6 +121,7 @@ export const contentFolderParameters: INodeProperties[] = [
 				displayName: 'Contents',
 				values: [
 					newResourceLocator({
+						displayName: 'Content',
 						label: 'content',
 						name: 'contentId',
 						searchListMethod: 'searchContents',

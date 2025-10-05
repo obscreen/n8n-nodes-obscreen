@@ -83,6 +83,7 @@ export const playlistParameters: INodeProperties[] = [
 	 * Playlist Selector
 	 */
 	newResourceLocator({
+		displayName: 'Playlist',
 		name: 'playlistId',
 		label: 'playlist',
 		searchListMethod: 'searchPlaylists',

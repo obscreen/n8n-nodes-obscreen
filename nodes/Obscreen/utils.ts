@@ -181,14 +181,15 @@ export function newResourceMapper({
 }
 
 interface GetResourceLocatorProps {
+	displayName: string;
 	name: string;
 	label?: string;
 	searchListMethod: string;
 	show?: Record<string, string[]>;
 }
-export function newResourceLocator({name, label, searchListMethod, show}: GetResourceLocatorProps): INodeProperties {
+export function newResourceLocator({displayName, name, label, searchListMethod, show}: GetResourceLocatorProps): INodeProperties {
 	const properties: INodeProperties = {
-		displayName: 'Type',
+		displayName: displayName,
 		name: name,
 		type: 'resourceLocator',
 		default: { mode: 'list', value: '' },
@@ -197,7 +198,7 @@ export function newResourceLocator({name, label, searchListMethod, show}: GetRes
 				displayName: 'From List',
 				name: 'list',
 				type: 'list',
-				placeholder: `Select a${!label && 'n'} ${label || 'item'}...`,
+				placeholder: `Select a${typeof label === 'string' && label !== '' ? '' : 'n'} ${label || 'item'}...`,
 				typeOptions: {
 					searchListMethod: searchListMethod,
 					searchable: true,

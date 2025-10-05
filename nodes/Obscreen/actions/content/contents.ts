@@ -141,6 +141,7 @@ export const contentParameters: INodeProperties[] = [
 	 * Content Selector
 	 */
 	newResourceLocator({
+		displayName: 'Content',
 		name: 'contentId',
 		label: 'content',
 		searchListMethod: 'searchContents',
@@ -153,6 +154,7 @@ export const contentParameters: INodeProperties[] = [
 	 * Folder ID Selector
 	 */
 	newResourceLocator({
+		displayName: 'Folder',
 		name: 'folderId',
 		label: 'folder',
 		searchListMethod: 'searchFolders',
@@ -163,6 +165,7 @@ export const contentParameters: INodeProperties[] = [
 		},
 	}),
 	newResourceLocator({
+		displayName: 'Folder',
 		name: 'folderId',
 		label: 'folder',
 		searchListMethod: 'searchFolders',
@@ -209,6 +212,7 @@ export const contentParameters: INodeProperties[] = [
 	 * Content Type Selector
 	 */
 	newResourceLocator({
+		displayName: 'Content Type',
 		name: 'contentType',
 		label: 'content type',
 		searchListMethod: 'searchContentTypes',
