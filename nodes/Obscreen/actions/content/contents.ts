@@ -52,7 +52,7 @@ export const contentOperations: INodeProperties[] = [
 			{
 				name: 'Get Types',
 				value: 'getTypes',
-				description: 'Get content types',
+				description: 'Get available content types',
 				action: 'Get types',
 			},
 			{

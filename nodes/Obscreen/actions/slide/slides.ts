@@ -11,10 +11,12 @@ import {
 	newResourceLocator
 } from '../../utils';
 import { slideMappings } from './mappings';
-import type { SlidePositions } from '../../types';
 export { searchSlides } from './search';
 
 export const slideOperations: INodeProperties[] = [
+	/**
+	 * Operation
+	 */
 	{
 		displayName: 'Operation',
 		name: 'operation',
@@ -76,7 +78,37 @@ export const slideOperations: INodeProperties[] = [
 			},
 		],
 		default: 'get',
-	}
+	},
+	/**
+	 * Slide Mode
+	 */
+	{
+		displayName: 'Slide Mode',
+		name: 'slideMode',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+			},
+		},
+		options: [
+			{
+				name: 'Regular',
+				value: 'regular',
+				description: 'Regular slide are displayed in the playlist in the order they are added',
+				action: 'Regular slide',
+			},
+			{
+				name: 'Notification',
+				value: 'notification',
+				description: 'Notification slide are displayed in the playlist at specific times',
+				action: 'Notification slide',
+			},
+		],
+		default: 'regular',
+	},
 ];
 
 export const slideParameters: INodeProperties[] = [
@@ -90,7 +122,7 @@ export const slideParameters: INodeProperties[] = [
 		searchListMethod: 'searchSlides',
 		show: {
 			resource: ['slides'],
-			operation: ['delete', 'get', 'update', 'updateNotification'],
+			operation: ['delete', 'get', 'update'],
 		},
 	}),
 	/**
@@ -103,7 +135,7 @@ export const slideParameters: INodeProperties[] = [
 		searchListMethod: 'searchContents',
 		show: {
 			resource: ['slides'],
-			operation: ['create', 'createNotification', 'update', 'updateNotification'],
+			operation: ['create', 'update'],
 		},
 	}),
 	/**
@@ -116,122 +148,53 @@ export const slideParameters: INodeProperties[] = [
 		searchListMethod: 'searchPlaylists',
 		show: {
 			resource: ['slides'],
-			operation: ['create', 'createNotification', 'update', 'updateNotification'],
+			operation: ['create', 'update'],
 		},
 	}),
 	/**
-	 * Enabled
+	 * Regular Start Scheduling Type
 	 */
 	{
-		displayName: 'Enabled',
-		name: 'enabled',
-		type: 'boolean',
-		default: true,
-		description: 'Whether the slide is enabled',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-			},
-		},
-	},
-	/**
-	 * Duration
-	 */
-	{
-		displayName: 'Duration',
-		name: 'duration',
-		type: 'number',
-		default: 3,
-		description: 'Duration of the slide in seconds',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-			},
-		},
-	},
-	/**
-	 * Position
-	 */
-	{
-		displayName: 'Position',
-		name: 'position',
-		type: 'number',
-		default: 999,
-		description: 'Position of the slide in the playlist',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-			},
-		},
-	},
-	/**
-	 * Delegate Duration
-	 */
-	{
-		displayName: 'Delegate Duration',
-		name: 'delegateDuration',
-		type: 'boolean',
-		default: false,
-		description: 'Whether the duration should be delegated to video duration',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'update'],
-			},
-			hide: {
-				operation: ['createNotification', 'updateNotification'],
-			},
-		},
-	},
-	/**
-	 * Scheduling Type
-	 */
-	{
-		displayName: 'Scheduling Type',
-		name: 'scheduling',
+		displayName: 'Scheduling Start',
+		name: 'schedulingStart',
 		type: 'options',
 		options: [
 			{
-				name: 'Loop',
+				name: 'Always in Loop',
 				value: 'loop',
 				description: 'Play continuously in loop',
 			},
 			{
-				name: 'Date Time',
+				name: 'Date & Time',
 				value: 'datetime',
 				description: 'Schedule for specific date and time',
 			},
 			{
-				name: 'In Week',
+				name: 'Moment in Week',
 				value: 'inweek',
 				description: 'Schedule for specific days/time of week',
 			},
 		],
 		default: 'loop',
-		description: 'How the slide should be scheduled',
+		description: 'How the slide should be scheduled at start',
 		displayOptions: {
 			show: {
 				resource: ['slides'],
 				operation: ['create', 'update'],
-			},
-			hide: {
-				operation: ['createNotification', 'updateNotification'],
+				slideMode: ['regular'],
 			},
 		},
 	},
 	/**
-	 * Notification Scheduling Type
+	 * Notification Start Scheduling Type
 	 */
 	{
-		displayName: 'Notification Scheduling Type',
-		name: 'notificationScheduling',
+		displayName: 'Scheduling Start',
+		name: 'schedulingStart',
 		type: 'options',
 		options: [
 			{
-				name: 'Date Time',
+				name: 'Date & Time',
 				value: 'datetime',
 				description: 'Schedule for specific date and time',
 			},
@@ -246,79 +209,199 @@ export const slideParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['slides'],
-				operation: ['createNotification', 'updateNotification'],
+				operation: ['create', 'update'],
+				slideMode: ['notification'],
 			},
 		},
 	},
 	/**
-	 * Date Time scheduling
+	 * Date Time Start
 	 */
 	{
 		displayName: 'Start Date Time',
 		name: 'datetimeStart',
-		type: 'string',
+		type: 'dateTime',
 		default: '',
 		placeholder: 'e.g. 2024-01-15 09:00',
 		description: 'Start date and time for scheduling (format: Y-m-d H:M)',
+		hint: 'Seconds are ignored; Using the time zone configured in your instance',
 		displayOptions: {
 			show: {
 				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-				scheduling: ['datetime'],
+				operation: ['create', 'update'],
+				schedulingStart: ['datetime'],
 			},
 		},
 	},
 	/**
-	 * End Date Time
+	 * Regular End Scheduling Type
+	 */
+	{
+		displayName: 'Scheduling End',
+		name: 'schedulingEnd',
+		type: 'options',
+		options: [
+			{
+				name: 'Follow Loop',
+				value: 'loop',
+				description: 'Follow the loop of the playlist',
+			},
+			{
+				name: 'Date & Time',
+				value: 'datetime',
+				description: 'Schedule for specific date and time',
+			},
+		],
+		default: 'loop',
+		description: 'How the slide should be scheduled at end',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				slideMode: ['regular'],
+				schedulingStart: ['datetime'],
+			},
+		},
+	},
+	/**
+	 * Notification End Scheduling Type
+	 */
+	{
+		displayName: 'Scheduling End',
+		name: 'schedulingEnd',
+		type: 'options',
+		options: [
+			{
+				name: 'Date & Time',
+				value: 'datetime',
+				description: 'Hide notification at specific date and time',
+			},
+			{
+				name: 'Duration',
+				value: 'duration',
+				description: 'Hide notification after specific duration',
+			},
+		],
+		default: 'datetime',
+		description: 'How the slide should be scheduled at end',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				slideMode: ['notification'],
+				schedulingStart: ['datetime'],
+			},
+		},
+	},
+	/**
+	 * Date Time End
 	 */
 	{
 		displayName: 'End Date Time',
 		name: 'datetimeEnd',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 2024-01-15 17:00',
-		description: 'End date and time for scheduling (format: Y-m-d H:M)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-				scheduling: ['datetime'],
-			},
-		},
-	},
-	/**
-	 * Notification Start Date Time
-	 */
-	{
-		displayName: 'Notification Start Date Time',
-		name: 'datetimeStart',
-		type: 'string',
+		type: 'dateTime',
 		default: '',
 		placeholder: 'e.g. 2024-01-15 09:00',
-		description: 'Start date and time for notification scheduling (format: Y-m-d H:M)',
+		description: 'End date and time for scheduling (format: Y-m-d H:M)',
+		hint: 'Seconds are ignored; Using the time zone configured in your instance',
 		displayOptions: {
 			show: {
 				resource: ['slides'],
-				operation: ['createNotification', 'updateNotification'],
-				notificationScheduling: ['datetime'],
+				operation: ['create', 'update'],
+				schedulingStart: ['datetime'],
+				schedulingEnd: ['datetime'],
 			},
 		},
 	},
 	/**
-	 * Notification End Date Time
+	 * Start Day Of Week
 	 */
 	{
-		displayName: 'Notification End Date Time',
-		name: 'datetimeEnd',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 2024-01-15 17:00',
-		description: 'End date and time for notification scheduling (format: Y-m-d H:M)',
+		displayName: 'Start Day',
+		name: 'dayStart',
+		type: 'options',
+		default: 1,
+		description: 'Start day for inweek scheduling (1 for Monday to 7 for Sunday)',
+        options: [
+            { name: 'Monday', value: 1 },
+            { name: 'Tuesday', value: 2 },
+            { name: 'Wednesday', value: 3 },
+            { name: 'Thursday', value: 4 },
+            { name: 'Friday', value: 5 },
+            { name: 'Saturday', value: 6 },
+            { name: 'Sunday', value: 7 },
+        ],
 		displayOptions: {
 			show: {
 				resource: ['slides'],
-				operation: ['createNotification', 'updateNotification'],
-				notificationScheduling: ['datetime'],
+				operation: ['create', 'update'],
+				schedulingStart: ['inweek'],
+			},
+		},
+	},
+	/**
+	 * Start Time
+	 */
+	{
+		displayName: 'Start Time',
+		name: 'timeStart',
+		type: 'string',
+		default: '09:00',
+		validateType: 'time',
+		placeholder: 'e.g. 09:00',
+		description: 'Start time for inweek scheduling (format: H:M)',
+		hint: 'Take into account the time zone configured in your Obscreen instance',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				schedulingStart: ['inweek'],
+			},
+		},
+	},
+	/**
+	 * End Day Of Week
+	 */
+	{
+		displayName: 'End Day',
+		name: 'dayEnd',
+		type: 'options',
+		default: 1,
+		description: 'End day for inweek scheduling (1 for Monday to 7 for Sunday)',
+		options: [
+			{ name: 'Monday', value: 1 },
+			{ name: 'Tuesday', value: 2 },
+			{ name: 'Wednesday', value: 3 },
+			{ name: 'Thursday', value: 4 },
+			{ name: 'Friday', value: 5 },
+			{ name: 'Saturday', value: 6 },
+			{ name: 'Sunday', value: 7 },
+		],
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				schedulingStart: ['inweek'],
+			},
+		},
+	},
+	/**
+	 * End Time
+	 */
+	{
+		displayName: 'End Time',
+		name: 'timeEnd',
+		type: 'string',
+		default: '17:00',
+		placeholder: 'e.g. 17:00',
+		validateType: 'time',
+		description: 'End time for inweek scheduling (format: H:M)',
+		hint: 'Take into account the time zone configured in your Obscreen instance',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				schedulingStart: ['inweek'],
 			},
 		},
 	},
@@ -335,96 +418,8 @@ export const slideParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['slides'],
-				operation: ['createNotification', 'updateNotification'],
-				notificationScheduling: ['cron'],
-			},
-		},
-	},
-	/**
-	 * Cron End Expression
-	 */
-	{
-		displayName: 'Cron End Expression',
-		name: 'cronEnd',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 0 17 * * * * *',
-		description: 'Cron expression for notification scheduling end (format: * * * * * * *)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['createNotification', 'updateNotification'],
-				notificationScheduling: ['cron'],
-			},
-		},
-	},
-	/**
-	 * In week scheduling
-	 */
-	{
-		displayName: 'Start Day',
-		name: 'dayStart',
-		type: 'number',
-		default: 1,
-		description: 'Start day for inweek scheduling (1 for Monday to 7 for Sunday)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
 				operation: ['create', 'update'],
-				scheduling: ['inweek'],
-			},
-		},
-	},
-	/**
-	 * Start Time
-	 */
-	{
-		displayName: 'Start Time',
-		name: 'timeStart',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 09:00',
-		description: 'Start time for inweek scheduling (format: H:M)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'update'],
-				scheduling: ['inweek'],
-			},
-		},
-	},
-	/**
-	 * End Day
-	 */
-	{
-		displayName: 'End Day',
-		name: 'dayEnd',
-		type: 'number',
-		default: 5,
-		description: 'End day for inweek scheduling (1 for Monday to 7 for Sunday)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'update'],
-				scheduling: ['inweek'],
-			},
-		},
-	},
-	/**
-	 * End Time
-	 */
-	{
-		displayName: 'End Time',
-		name: 'timeEnd',
-		type: 'string',
-		default: '',
-		placeholder: 'e.g. 17:00',
-		description: 'End time for inweek scheduling (format: H:M)',
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'update'],
-				scheduling: ['inweek'],
+				schedulingStart: ['cron'],
 			},
 		},
 	},
@@ -434,10 +429,11 @@ export const slideParameters: INodeProperties[] = [
 	{
 		displayName: 'Slide Positions',
 		name: 'positions',
-		type: 'string',
+		type: 'json',
 		default: '',
 		placeholder: 'e.g. {"123": 1, "456": 2}',
 		description: 'JSON object with slide IDs as keys and their new positions as values',
+		hint: 'JSON object with slide IDs as keys and their new positions as values (e.g. {"123": 1, "456": 2})',
 		displayOptions: {
 			show: {
 				resource: ['slides'],
@@ -470,17 +466,10 @@ export const slideParameters: INodeProperties[] = [
 export async function slideCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 	return {
 		fields: [
-			slideMappings.ENABLED,
 			slideMappings.DURATION,
-			slideMappings.POSITION,
 			slideMappings.DELEGATE_DURATION,
-			slideMappings.SCHEDULING,
-			slideMappings.DATETIME_START,
-			slideMappings.DATETIME_END,
-			slideMappings.DAY_START,
-			slideMappings.TIME_START,
-			slideMappings.DAY_END,
-			slideMappings.TIME_END,
+			slideMappings.POSITION,
+			slideMappings.ENABLED,
 		],
 	};
 }
@@ -488,19 +477,12 @@ export async function slideCreateMappingColumns(this: ILoadOptionsFunctions): Pr
 export async function slideUpdateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
 	return {
 		fields: [
-			slideMappings.ENABLED,
 			slideMappings.DURATION,
-			slideMappings.POSITION,
 			slideMappings.DELEGATE_DURATION,
-			slideMappings.DATETIME_START,
-			slideMappings.DATETIME_END,
-			slideMappings.DAY_START,
-			slideMappings.TIME_START,
-			slideMappings.DAY_END,
-			slideMappings.TIME_END,
+			slideMappings.ENABLED,
 		],
 	};
-};
+}
 
 async function getAllSlides(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const endpoint = '/api/slides';
@@ -888,10 +870,10 @@ async function updateSlidePositions(
 	const positionsString = this.getNodeParameter('positions', itemIndex, '') as string;
 	
 	try {
-		const positions = JSON.parse(positionsString) as SlidePositions;
+		const positions = JSON.parse(positionsString) as Record<string, number>;
 		
 		const endpoint = '/api/slides/positions';
-		const body = { positions: positions.positions };
+		const body = { positions: positions };
 		
 		const response = await executeApiRequest.call(this, 'POST', endpoint, body);
 		return response;

@@ -38,10 +38,6 @@ export interface SlideOutput {
 	position: number;
 }
 
-export interface SlidePositions {
-	positions: Record<string, number>;
-}
-
 export interface ProcessOutput {
 	max_polling_interval?: number;
 	status?: string;
