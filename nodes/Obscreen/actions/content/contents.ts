@@ -4,7 +4,7 @@ import { buildApiUrl, executeApiRequest, getResourceId, newResourceLocator, nonE
 export { searchContents, searchContentTypes } from './search';
 import FormData from 'form-data';
 
-const BINARY_TYPES = ['picture', 'video', 'html'];
+const BINARY_TYPES = ['picture', 'video'];
 const TEXT_TYPES = ['url', 'youtube', 'html', 'text', 'external_storage', 'playlist_embed'];
 
 export const contentOperations: INodeProperties[] = [
