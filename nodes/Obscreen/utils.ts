@@ -1,5 +1,6 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
+import FormData from 'form-data';
 
 export function buildApiUrl(endpoint: string, params?: Record<string, any>): string {
 	let url = endpoint;
@@ -92,7 +93,7 @@ export async function executeApiRequest(
 		returnFullResponse: true,
 		json: true,
 		headers: {
-			'Content-Type': 'application/json',
+			'Content-Type': body instanceof FormData ? 'multipart/form-data' : 'application/json',
 			...(additionalOptions?.headers || {}),
 		},
 		...additionalOptions,

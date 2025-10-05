@@ -2,6 +2,7 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n
 import { NodeOperationError } from 'n8n-workflow';
 import { executeApiRequest, getResourceId, newResourceLocator } from '../../utils';
 export { searchContents, searchContentTypes } from './search';
+import FormData from 'form-data';
 
 const BINARY_TYPES = ['picture', 'video', 'html'];
 const TEXT_TYPES = ['url', 'youtube', 'html', 'text', 'external_storage', 'playlist_embed'];
@@ -175,11 +176,13 @@ export const contentParameters: INodeProperties[] = [
 	 * Content File
 	 */
 	{
-		displayName: 'Content Binary Payload',
+		displayName: 'Content Binary Input',
 		name: 'object',
 		type: 'string',
-		default: 'dataBinary',
-		description: 'Content file to upload',
+		default: 'data',
+		description: 'File to upload as binary content',
+		hint: 'You must use binary input name (e.g. "data")',
+		placeholder: 'data',
 		displayOptions: {
 			show: {
 				resource: ['contents'],
@@ -263,34 +266,41 @@ async function createContent(
 	const folderDestinationMode = this.getNodeParameter('folderDestinationMode', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
-	const type = this.getNodeParameter('contentType', itemIndex, 'url') as string;
+	const type = getResourceId(this.getNodeParameter('contentType', itemIndex, 'url') as string);
 	const name = this.getNodeParameter('name', itemIndex, '') as string;
 	const location = this.getNodeParameter('location', itemIndex, '') as string;
+	const object = this.getNodeParameter('object', itemIndex, '') as string;
 
 	const endpoint = '/api/contents/';
 
-	let body: any = {
-		name,
-		type,
-	};
+	const body = new FormData();
+	body.append('name', name);
+	body.append('type', type);
 
 	switch (folderDestinationMode) {
 		case 'pickFromList':
-			body.parent_folder_id = getResourceId(folderId);
+			body.append('parent_folder_id', getResourceId(folderId));
 			break;
 		case 'absolutePath':
-			body.parent_folder_path = path;
+			body.append('parent_folder_path', path);
 			break;
 	}
 
 	if (location) {
-		body.location = location;
+		body.append('location', location);
 	}
 
 	if (BINARY_TYPES.includes(type)) {
-		body.multipart = {
-			object: '=dataBinary',
-		};
+		const binaryData = this.getInputData()[itemIndex].binary?.[object];
+		if (!binaryData) {
+			throw new Error(`No binary data found in "${object}" at item ${itemIndex}.`);
+		}
+		const fileBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, object);
+		body.append('object', fileBuffer, {
+			filename: binaryData.fileName || 'file',
+			contentType: binaryData.mimeType || 'application/octet-stream',
+			knownLength: binaryData.data.length,
+		});
 	}
 
 	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
