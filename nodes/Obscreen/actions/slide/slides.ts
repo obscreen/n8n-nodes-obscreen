@@ -1,7 +1,6 @@
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { 
-	buildApiUrl, 
 	executeApiRequest, 
 	getResourceId,
 	isValidCronExpression,
@@ -567,7 +566,7 @@ async function createSlide(
 	const delegateDuration = this.getNodeParameter('delegateDuration', itemIndex, false) as boolean;
 	const scheduling = this.getNodeParameter('scheduling', itemIndex, 'loop') as string;
 
-	const params: Record<string, any> = {
+	const body: Record<string, any> = {
 		content_id: contentId,
 		playlist_id: playlistId,
 		enabled: enabled.toString(),
@@ -586,14 +585,14 @@ async function createSlide(
 			if (!validateDateTimeFormat(datetimeStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
 			}
-			params.datetime_start = datetimeStart;
+			body.datetime_start = datetimeStart;
 		}
 		
 		if (datetimeEnd) {
 			if (!validateDateTimeFormat(datetimeEnd)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
 			}
-			params.datetime_end = datetimeEnd;
+			body.datetime_end = datetimeEnd;
 		}
 	} else if (scheduling === 'inweek') {
 		const dayStart = this.getNodeParameter('dayStart', itemIndex, 1) as number;
@@ -617,16 +616,15 @@ async function createSlide(
 			throw new NodeOperationError(this.getNode(), 'Invalid time format. Use H:M format (e.g. 17:00)');
 		}
 
-		params.day_start = dayStart;
-		params.day_end = dayEnd;
-		if (timeStart) params.time_start = timeStart;
-		if (timeEnd) params.time_end = timeEnd;
+		body.day_start = dayStart;
+		body.day_end = dayEnd;
+		if (timeStart) body.time_start = timeStart;
+		if (timeEnd) body.time_end = timeEnd;
 	}
 
 	const endpoint = '/api/slides/';
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'POST', url);
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
 	return response;
 }
 
@@ -645,7 +643,7 @@ async function createSlideNotification(
 	const position = this.getNodeParameter('position', itemIndex, 999) as number;
 	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
 
-	const params: Record<string, any> = {
+	const body: Record<string, any> = {
 		content_id: contentId,
 		playlist_id: playlistId,
 		enabled: enabled.toString(),
@@ -662,14 +660,14 @@ async function createSlideNotification(
 			if (!validateDateTimeFormat(datetimeStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
 			}
-			params.datetime_start = datetimeStart;
+			body.datetime_start = datetimeStart;
 		}
 		
 		if (datetimeEnd) {
 			if (!validateDateTimeFormat(datetimeEnd)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
 			}
-			params.datetime_end = datetimeEnd;
+			body.datetime_end = datetimeEnd;
 		}
 	} else if (notificationScheduling === 'cron') {
 		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
@@ -679,21 +677,20 @@ async function createSlideNotification(
 			if (!isValidCronExpression(cronStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
 			}
-			params.cron_start = cronStart;
+			body.cron_start = cronStart;
 		}
 		
 		if (cronEnd) {
 			if (!isValidCronExpression(cronEnd)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
 			}
-			params.cron_end = cronEnd;
+			body.cron_end = cronEnd;
 		}
 	}
 
 	const endpoint = '/api/slides/notifications';
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'POST', url);
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
 	return response;
 }
 
@@ -738,27 +735,27 @@ async function updateSlide(
 	const playlistId = getResourceId(playlistIdValue);
 	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, any> = {};
+	const body: Record<string, any> = {};
 	
 	// Map the fields from Resource Mapper to API parameters
 	if (fields.enabled !== undefined) {
-		params.enabled = fields.enabled.toString();
+		body.enabled = fields.enabled.toString();
 	}
 	if (fields.duration !== undefined) {
-		params.duration = fields.duration;
+		body.duration = fields.duration;
 	}
 	if (fields.position !== undefined) {
-		params.position = fields.position;
+		body.position = fields.position;
 	}
 	if (fields.delegateDuration !== undefined) {
-		params.delegate_duration = fields.delegateDuration.toString();
+		body.delegate_duration = fields.delegateDuration.toString();
 	}
 	if (fields.scheduling !== undefined) {
-		params.scheduling = fields.scheduling;
+		body.scheduling = fields.scheduling;
 	}
 
-	if (contentId) params.content_id = parseInt(contentId, 10);
-	if (playlistId) params.playlist_id = playlistId;
+	if (contentId) body.content_id = parseInt(contentId, 10);
+	if (playlistId) body.playlist_id = playlistId;
 
 	if (fields.scheduling === 'datetime') {
 		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
@@ -768,14 +765,14 @@ async function updateSlide(
 			if (!validateDateTimeFormat(datetimeStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
 			}
-			params.datetime_start = datetimeStart;
+			body.datetime_start = datetimeStart;
 		}
 		
 		if (datetimeEnd) {
 		if (!validateDateTimeFormat(datetimeEnd)) {
 			throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
 		}
-			params.datetime_end = datetimeEnd;
+			body.datetime_end = datetimeEnd;
 		}
 	} else if (fields.scheduling === 'inweek') {
 		const dayStart = this.getNodeParameter('dayStart', itemIndex, 1) as number;
@@ -799,16 +796,15 @@ async function updateSlide(
 			throw new NodeOperationError(this.getNode(), 'Invalid time format. Use H:M format (e.g. 17:00)');
 		}
 
-		params.day_start = dayStart;
-		params.day_end = dayEnd;
-		if (timeStart) params.time_start = timeStart;
-		if (timeEnd) params.time_end = timeEnd;
+		body.day_start = dayStart;
+		body.day_end = dayEnd;
+		if (timeStart) body.time_start = timeStart;
+		if (timeEnd) body.time_end = timeEnd;
 	}
 
 	const endpoint = `/api/slides/${slideId}`;
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'PUT', url);
+	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
 	return response;
 }
 
@@ -828,15 +824,15 @@ async function updateSlideNotification(
 	const position = this.getNodeParameter('position', itemIndex, 999) as number;
 	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
 
-	const params: Record<string, any> = {
+	const body: Record<string, any> = {
 		enabled: enabled.toString(),
 		duration,
 		position,
 		scheduling: notificationScheduling,
 	};
 	
-	if (contentId) params.content_id = parseInt(contentId, 10);
-	if (playlistId) params.playlist_id = playlistId;
+	if (contentId) body.content_id = parseInt(contentId, 10);
+	if (playlistId) body.playlist_id = playlistId;
 
 	if (notificationScheduling === 'datetime') {
 		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
@@ -846,14 +842,14 @@ async function updateSlideNotification(
 			if (!validateDateTimeFormat(datetimeStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
 			}
-			params.datetime_start = datetimeStart;
+			body.datetime_start = datetimeStart;
 		}
 		
 		if (datetimeEnd) {
 			if (!validateDateTimeFormat(datetimeEnd)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
 			}
-			params.datetime_end = datetimeEnd;
+			body.datetime_end = datetimeEnd;
 		}
 	} else if (notificationScheduling === 'cron') {
 		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
@@ -863,21 +859,20 @@ async function updateSlideNotification(
 			if (!isValidCronExpression(cronStart)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
 			}
-			params.cron_start = cronStart;
+			body.cron_start = cronStart;
 		}
 		
 		if (cronEnd) {
 			if (!isValidCronExpression(cronEnd)) {
 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
 			}
-			params.cron_end = cronEnd;
+			body.cron_end = cronEnd;
 		}
 	}
 
 	const endpoint = `/api/slides/notifications/${slideId}`;
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'PUT', url);
+	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
 	return response;
 }
 

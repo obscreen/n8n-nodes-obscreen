@@ -206,7 +206,7 @@ export function newResourceLocator({name, label, searchListMethod, show}: GetRes
 		],
 	};
 
-	if (show !== undefined) {
+	if (show) {
 		if (!properties.displayOptions) {
 			properties.displayOptions = {};
 		}

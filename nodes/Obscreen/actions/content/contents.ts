@@ -1,135 +1,128 @@
-import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { buildApiUrl, executeApiRequest, getResourceId } from '../../utils';
-import { contentMappings } from './mappings';
-export { searchContents } from './search';
-// import type { BulkUploadResult } from '../../types';
+import { executeApiRequest, getResourceId, newResourceLocator } from '../../utils';
+export { searchContents, searchContentTypes } from './search';
 
-export const contentOperations: INodeProperties = {
-	displayName: 'Operation',
-	name: 'operation',
-	type: 'options',
-	noDataExpression: true,
-	displayOptions: {
-		show: {
-			resource: ['contents'],
+const BINARY_TYPES = ['picture', 'video', 'html'];
+const TEXT_TYPES = ['url', 'youtube', 'html', 'text', 'external_storage', 'playlist_embed'];
+
+export const contentOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+			},
 		},
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create content',
+				action: 'Create content',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete content permanently',
+				action: 'Delete content',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get content information by ID',
+				action: 'Get content',
+			},
+			{
+				name: 'Get Location',
+				value: 'getLocation',
+				description: 'Get content location by ID',
+				action: 'Get content location',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve a list of contents',
+				action: 'Get many contents',
+			},
+			{
+				name: 'Get Types',
+				value: 'getTypes',
+				description: 'Get content types',
+				action: 'Get types',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update existing content',
+				action: 'Update content',
+			},
+		],
+		default: 'get',
 	},
-	options: [
-		{
-			name: 'Create',
-			value: 'create',
-			description: 'Upload new content to Obscreen',
-			action: 'Create content',
+	{
+		displayName: 'Folder Destination Mode',
+		name: 'folderDestinationMode',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['create'],
+			},
 		},
-		{
-			name: 'Delete',
-			value: 'delete',
-			description: 'Delete content permanently',
-			action: 'Delete content',
-		},
-		{
-			name: 'Get',
-			value: 'get',
-			description: 'Get content information by ID',
-			action: 'Get content',
-		},
-		{
-			name: 'Get Location',
-			value: 'getLocation',
-			description: 'Get content location by ID',
-			action: 'Get content location',
-		},
-		{
-			name: 'Get Many',
-			value: 'getAll',
-			description: 'Retrieve a list of contents',
-			action: 'Get many contents',
-		},
-		{
-			name: 'Update',
-			value: 'update',
-			description: 'Update existing content',
-			action: 'Update content',
-		},
-		// {
-		// 	name: 'Upload Multiple Files',
-		// 	value: 'uploadBulk',
-		// 	description: 'Upload multiple content files at once',
-		// 	action: 'Upload multiple files',
-		// },
-	],
-	default: 'get',
-};
+		options: [
+			{
+				name: 'Pick From List',
+				value: 'pickFromList',
+				description: 'Pick a folder from list',
+				action: 'Pick from list',
+			},
+			{
+				name: 'Absolute Path',
+				value: 'absolutePath',
+				description: 'Absolute path of the folder',
+				action: 'Absolute path',
+			},
+			{
+				name: 'Root Folder',
+				value: 'rootFolder',
+				action: 'Root folder',
+			},
+		],
+		default: 'pickFromList',
+	}
+];
 
 export const contentParameters: INodeProperties[] = [
 	/**
 	 * Content Selector
 	 */
-	{
-		displayName: 'Content',
+	newResourceLocator({
 		name: 'contentId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a content...',
-				typeOptions: {
-					searchListMethod: 'searchContents',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 123',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['delete', 'get', 'getLocation', 'update'],
-			},
+		label: 'content',
+		searchListMethod: 'searchContents',
+		show: {
+			resource: ['contents'],
+			operation: ['delete', 'get', 'getLocation', 'update'],
 		},
-	},
+	}),
 	/**
-	 * Folder Selector
+	 * Folder ID Selector
 	 */
-	{
-		displayName: 'Folder',
+	newResourceLocator({
 		name: 'folderId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a folder...',
-				typeOptions: {
-					searchListMethod: 'searchFolders',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 456',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['create', 'uploadBulk'],
-			},
+		label: 'folder',
+		searchListMethod: 'searchFolders',
+		show: {
+			resource: ['contents'],
+			operation: ['create', 'getAll', 'update'],
+			folderDestinationMode: ['pickFromList'],
 		},
-	},
+	}),
 	/**
 	 * Folder Path
 	 */
@@ -144,6 +137,56 @@ export const contentParameters: INodeProperties[] = [
 			show: {
 				resource: ['contents'],
 				operation: ['create', 'getAll', 'update'],
+				folderDestinationMode: ['absolutePath'],
+			},
+		},
+	},
+	/**
+	 * Content Type Selector
+	 */
+	newResourceLocator({
+		name: 'contentType',
+		label: 'content type',
+		searchListMethod: 'searchContentTypes',
+		show: {
+			resource: ['contents'],
+			operation: ['create'],
+		},
+	}),
+	/**
+	 * Content Location
+	 */
+	{
+		displayName: 'Content Text Payload',
+		name: 'location',
+		type: 'string',
+		default: '',
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['create'],
+			},
+			hide: {
+				contentType: [...BINARY_TYPES, ''],
+			},
+		},
+	},
+	/**
+	 * Content File
+	 */
+	{
+		displayName: 'Content Binary Payload',
+		name: 'object',
+		type: 'string',
+		default: 'dataBinary',
+		description: 'Content file to upload',
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['create'],
+			},
+			hide: {
+				contentType: [...TEXT_TYPES, ''],
 			},
 		},
 	},
@@ -162,173 +205,9 @@ export const contentParameters: INodeProperties[] = [
 				resource: ['contents'],
 				operation: ['create', 'update'],
 			},
-			hide: {
-				operation: ['update'],
-			},
-		},
-	},
-	/**
-	 * Content Type
-	 */
-	{
-		displayName: 'Content Type',
-		name: 'type',
-		type: 'options',
-		options: [
-			{
-				name: 'Picture',
-				value: 'picture',
-			},
-			{
-				name: 'Video',
-				value: 'video',
-			},
-		],
-		default: 'picture',
-		description: 'Type of the content',
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['create'],
-			},
-		},
-	},
-	/**
-	 * Content Location
-	 */
-	{
-		displayName: 'Content Location',
-		name: 'location',
-		type: 'options',
-		options: [
-			{
-				name: 'URL',
-				value: 'url',
-			},
-			{
-				name: 'YouTube',
-				value: 'youtube',
-			},
-			{
-				name: 'External Storage',
-				value: 'external_storage',
-			},
-		],
-		default: 'url',
-		description: 'Content location type',
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['create'],
-			},
-			hide: {
-				type: ['picture', 'video'],
-			},
-		},
-	},
-	/**
-	 * Content File
-	 */
-	{
-		displayName: 'Content File',
-		name: 'object',
-		type: 'string',
-		default: 'dataBinary',
-		description: 'Content file to upload',
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['create'],
-			},
-			hide: {
-				location: ['url', 'youtube', 'external_storage'],
-			},
-		},
-	},
-	/**
-	 * Fields for Create
-	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
-		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'contentCreateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['create'],
-			},
-		},
-	},
-	/**
-	 * Fields for Update
-	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
-		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'contentUpdateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['contents'],
-				operation: ['update'],
-			},
 		},
 	},
 ];
-
-export async function contentCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-	return {
-		fields: [
-			contentMappings.NAME,
-			contentMappings.TYPE,
-			contentMappings.LOCATION,
-			contentMappings.OBJECT,
-		],
-	};
-}
-
-export async function contentUpdateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-	return {
-		fields: [
-			contentMappings.NAME,
-		],
-	};
-}
 
 export async function executeContentOperation(
 	this: IExecuteFunctions,
@@ -347,8 +226,8 @@ export async function executeContentOperation(
 			get: getContent.bind(this),
 			getAll: getAllContents.bind(this),
 			getLocation: getContentLocation.bind(this),
+			getTypes: getContentTypes.bind(this),
 			update: updateContent.bind(this),
-			// uploadBulk: uploadBulkContent.bind(this),
 		};
 
 			const operationFunction = resourceOperations[operation];
@@ -381,30 +260,40 @@ async function createContent(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const name = this.getNodeParameter('name', itemIndex, '') as string;
-	const type = this.getNodeParameter('type', itemIndex, 'picture') as string;
-	const path = this.getNodeParameter('path', itemIndex, '') as string;
+	const folderDestinationMode = this.getNodeParameter('folderDestinationMode', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
-	const location = this.getNodeParameter('location', itemIndex, 'url') as string;
+	const path = this.getNodeParameter('path', itemIndex, '') as string;
+	const type = this.getNodeParameter('contentType', itemIndex, 'url') as string;
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	const location = this.getNodeParameter('location', itemIndex, '') as string;
 
 	const endpoint = '/api/contents/';
-	const url = buildApiUrl(endpoint, { name, type, path, folder_id: getResourceId(folderId), location });
 
-	let body: any = {};
-	
-	if (location === 'url' || location === 'youtube' || location === 'external_storage') {
-		// For URL-based content, no file upload
-	} else {
-		// For file upload content
-		// For file upload content, we'll send as multipart form data
-		body = {
-			multipart: {
-				object: '=dataBinary',
-			},
+	let body: any = {
+		name,
+		type,
+	};
+
+	switch (folderDestinationMode) {
+		case 'pickFromList':
+			body.parent_folder_id = getResourceId(folderId);
+			break;
+		case 'absolutePath':
+			body.parent_folder_path = path;
+			break;
+	}
+
+	if (location) {
+		body.location = location;
+	}
+
+	if (BINARY_TYPES.includes(type)) {
+		body.multipart = {
+			object: '=dataBinary',
 		};
 	}
 
-	const response = await executeApiRequest.call(this, 'POST', url, body);
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
 	return response;
 }
 
@@ -447,10 +336,13 @@ async function getAllContents(
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
 
-	const endpoint = '/api/contents/';
-	const url = buildApiUrl(endpoint, { path, folder_id: getResourceId(folderId) });
+	const body: Record<string, any> = {
+		path,
+		folder_id: getResourceId(folderId),
+	};
 
-	const response = await executeApiRequest.call(this, 'GET', url);
+	const endpoint = '/api/contents/';
+	const response = await executeApiRequest.call(this, 'GET', endpoint, body);
 	return response;
 }
 
@@ -468,6 +360,17 @@ async function getContentLocation(
 	return response;
 }
 
+async function getContentTypes(
+	this: IExecuteFunctions,
+	itemIndex: number,
+	resource: string,
+	operation: string
+): Promise<any> {
+	const endpoint = '/api/contents/types';
+	const response = await executeApiRequest.call(this, 'GET', endpoint);
+	return response;
+}
+
 async function updateContent(
 	this: IExecuteFunctions,
 	itemIndex: number,
@@ -478,59 +381,15 @@ async function updateContent(
 	const contentId = getResourceId(contentIdValue);
 	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 
-	const params: Record<string, string> = {};
+	const body: Record<string, string> = {};
 	
 	// Map the fields from Resource Mapper to API parameters
 	if (fields.name !== undefined && fields.name !== '') {
-		params.name = fields.name;
+		body.name = fields.name;
 	}
 
 	const endpoint = `/api/contents/${contentId}`;
-	const url = buildApiUrl(endpoint, params);
 
-	const response = await executeApiRequest.call(this, 'PUT', url);
+	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
 	return response;
 }
-
-// async function uploadBulkContent(
-// 	this: IExecuteFunctions,
-// 	itemIndex: number,
-// 	resource: string,
-// 	operation: string
-// ): Promise<BulkUploadResult> {
-// 	const path = this.getNodeParameter('path', itemIndex, '') as string;
-// 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
-// 	const urlsData = this.getNodeParameter('object.urls', itemIndex, []) as Array<{ url: string }>;
-
-// 	const endpoint = '/api/contents/upload-bulk';
-// 	const url = buildApiUrl(endpoint, { path, folder_id: folderId });
-
-// 	const result: BulkUploadResult = {
-// 		successful: 0,
-// 		failed: 0,
-// 		results: [],
-// 	};
-
-// 	for (const urlData of urlsData) {
-// 		try {
-// 			const body = {
-// 				multipart: {
-// 					object: urlData.url,
-// 				},
-// 			};
-
-// 			await executeApiRequest.call(this, 'POST', url, body);
-// 			result.successful++;
-// 			result.results.push({ filename: urlData.url, success: true });
-// 		} catch (error) {
-// 			result.failed++;
-// 			result.results.push({
-// 				filename: urlData.url,
-// 				success: false,
-// 				error: error.message,
-// 			});
-// 		}
-// 	}
-
-// 	return result;
-// }
