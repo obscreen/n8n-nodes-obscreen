@@ -1,4 +1,4 @@
-import type { IExecuteFunctions } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
 export function buildApiUrl(endpoint: string, params?: Record<string, any>): string {
@@ -133,4 +133,85 @@ export function getResourceId(resourceLocatorValue: any): string {
 	}
 
 	throw new Error('Invalid resource locator value');
+}
+
+
+interface GetResourceMapperProps {
+	name?: string;
+	resourceMapperMethod: string;
+	show: Record<string, string[]>;
+}
+export function newResourceMapper({
+	name = 'fields',
+	resourceMapperMethod,
+	show
+}: GetResourceMapperProps): INodeProperties {
+	return {
+		displayName: 'Fields',
+		name: name,
+		type: 'resourceMapper',
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		required: true,
+		typeOptions: {
+			resourceMapper: {
+				resourceMapperMethod: resourceMapperMethod,
+				mode: 'add',
+				fieldWords: {
+					singular: 'field',
+					plural: 'fields',
+				},
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: true,
+			},
+		},
+		displayOptions: {
+			show: show
+		},
+	}
+}
+
+interface GetResourceLocatorProps {
+	name: string;
+	label?: string;
+	searchListMethod: string;
+	show?: Record<string, string[]>;
+}
+export function newResourceLocator({name, label, searchListMethod, show}: GetResourceLocatorProps): INodeProperties {
+	const properties: INodeProperties = {
+		displayName: 'Type',
+		name: name,
+		type: 'resourceLocator',
+		default: { mode: 'list', value: '' },
+		modes: [
+			{
+				displayName: 'From List',
+				name: 'list',
+				type: 'list',
+				placeholder: `Select a${!label && 'n'} ${label || 'item'}...`,
+				typeOptions: {
+					searchListMethod: searchListMethod,
+					searchable: true,
+				},
+			},
+			{
+				displayName: 'ID',
+				name: 'id',
+				type: 'string',
+				placeholder: 'e.g. 456',
+			},
+		],
+	};
+
+	if (show !== undefined) {
+		if (!properties.displayOptions) {
+			properties.displayOptions = {};
+		}
+		properties.displayOptions.show = show;
+	}
+
+	return properties;
 }

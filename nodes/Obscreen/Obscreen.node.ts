@@ -65,10 +65,10 @@ export class Obscreen implements INodeType {
 			},
 			// Dynamic operation options based on resource selection
 			contentOperations,
-			contentFolderOperations,
-			playlistOperations,
-			slideOperations,
-			processOperations,
+			...contentFolderOperations,
+			...playlistOperations,
+			...slideOperations,
+			...processOperations,
 			// Dynamic parameters based on resource and operation selections
 			...contentParameters,
 			...contentFolderParameters,
@@ -82,6 +82,7 @@ export class Obscreen implements INodeType {
 		listSearch: {
 			searchPlaylists,
 			searchContents,
+			// searchContentTypes,
 			searchSlides,
 			searchFolders,
 		},
