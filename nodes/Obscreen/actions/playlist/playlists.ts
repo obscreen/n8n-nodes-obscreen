@@ -1,7 +1,7 @@
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { playlistMappings } from './mappings';
-import { executeApiRequest, getResourceId, newResourceMapper, newResourceLocator } from '../../utils';
+import { executeApiRequest, getResourceId, newResourceMapper, newResourceLocator, nonEmptyString } from '../../utils';
 export { searchPlaylists } from './search';
 
 export const playlistOperations: INodeProperties[] = [
@@ -286,7 +286,7 @@ async function updatePlaylist(
 	const body: Record<string, any> = {};
 
 	// Map the fields from Resource Mapper to API body
-	if (fields.name !== undefined && fields.name !== '') {
+	if (nonEmptyString(fields.name)) {
 		body.name = fields.name;
 	}
 	if (fields.enabled !== undefined) {

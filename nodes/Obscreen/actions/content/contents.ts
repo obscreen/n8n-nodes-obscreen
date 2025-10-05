@@ -486,13 +486,12 @@ async function updateContent(
 ): Promise<any> {
 	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
 	const contentId = getResourceId(contentIdValue);
-	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
 
 	const body: Record<string, string> = {};
 	
-	// Map the fields from Resource Mapper to API parameters
-	if (fields.name !== undefined && fields.name !== '') {
-		body.name = fields.name;
+	if (nonEmptyString(name)) {
+		body.name = name;
 	}
 
 	const endpoint = `/api/contents/${contentId}`;
