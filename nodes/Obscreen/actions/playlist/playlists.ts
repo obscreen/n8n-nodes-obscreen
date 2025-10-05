@@ -41,13 +41,13 @@ export const playlistOperations: INodeProperties[] = [
 				action: 'Get many playlists',
 			},
 			{
-				name: 'Get Notifications',
+				name: 'Get Playlist Notifications',
 				value: 'getNotifications',
 				description: 'Get notifications associated with playlist',
 				action: 'Get playlist notifications',
 			},
 			{
-				name: 'Get Slides',
+				name: 'Get Playlist Slides',
 				value: 'getSlides',
 				description: 'Get slides associated with playlist',
 				action: 'Get playlist slides',
