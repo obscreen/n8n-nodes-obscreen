@@ -1,6 +1,6 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { executeApiRequest, getResourceId, newResourceLocator } from '../../utils';
+import { buildApiUrl, executeApiRequest, getResourceId, newResourceLocator, nonEmptyString } from '../../utils';
 export { searchContents, searchContentTypes } from './search';
 import FormData from 'form-data';
 
@@ -64,9 +64,12 @@ export const contentOperations: INodeProperties[] = [
 		],
 		default: 'get',
 	},
+	/**
+	 * Folder Attach Mode
+	 */
 	{
-		displayName: 'Folder Destination Mode',
-		name: 'folderDestinationMode',
+		displayName: 'Folder Attach Mode',
+		name: 'folderAttachMode',
 		type: 'options',
 		noDataExpression: true,
 		displayOptions: {
@@ -95,6 +98,41 @@ export const contentOperations: INodeProperties[] = [
 			},
 		],
 		default: 'pickFromList',
+	},
+	/**
+	 * Folder Inspect Mode
+	 */
+	{
+		displayName: 'Folder Inspect Mode',
+		name: 'folderInspectMode',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['getAll'],
+			},
+		},
+		options: [
+			{
+				name: 'All Folders',
+				value: 'allFolders',
+				action: 'All folders',
+			},
+			{
+				name: 'Pick From List',
+				value: 'pickFromList',
+				description: 'Pick a folder from list',
+				action: 'Pick from list',
+			},
+			{
+				name: 'Absolute Path',
+				value: 'absolutePath',
+				description: 'Absolute path of the folder',
+				action: 'Absolute path',
+			},
+		],
+		default: 'allFolders',
 	}
 ];
 
@@ -120,8 +158,18 @@ export const contentParameters: INodeProperties[] = [
 		searchListMethod: 'searchFolders',
 		show: {
 			resource: ['contents'],
-			operation: ['create', 'getAll', 'update'],
-			folderDestinationMode: ['pickFromList'],
+			operation: ['create', 'update'],
+			folderAttachMode: ['pickFromList'],
+		},
+	}),
+	newResourceLocator({
+		name: 'folderId',
+		label: 'folder',
+		searchListMethod: 'searchFolders',
+		show: {
+			resource: ['contents'],
+			operation: ['getAll'],
+			folderInspectMode: ['pickFromList'],
 		},
 	}),
 	/**
@@ -137,8 +185,23 @@ export const contentParameters: INodeProperties[] = [
 		displayOptions: {
 			show: {
 				resource: ['contents'],
-				operation: ['create', 'getAll', 'update'],
-				folderDestinationMode: ['absolutePath'],
+				operation: ['create', 'update'],
+				folderAttachMode: ['absolutePath'],
+			},
+		},
+	},
+	{
+		displayName: 'Folder Path',
+		name: 'path',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. /my-content',
+		description: 'Path context (with path starting with /)',
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['getAll'],
+				folderInspectMode: ['absolutePath'],
 			},
 		},
 	},
@@ -151,7 +214,7 @@ export const contentParameters: INodeProperties[] = [
 		searchListMethod: 'searchContentTypes',
 		show: {
 			resource: ['contents'],
-			operation: ['create'],
+			operation: ['create', 'getAll'],
 		},
 	}),
 	/**
@@ -210,6 +273,20 @@ export const contentParameters: INodeProperties[] = [
 			},
 		},
 	},
+	{
+		displayName: 'Content Name Query Search',
+		name: 'name',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. My Content',
+		description: 'Partial name of the content',
+		displayOptions: {
+			show: {
+				resource: ['contents'],
+				operation: ['getAll'],
+			},
+		},
+	},
 ];
 
 export async function executeContentOperation(
@@ -263,7 +340,7 @@ async function createContent(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const folderDestinationMode = this.getNodeParameter('folderDestinationMode', itemIndex, '') as string;
+	const folderAttachMode = this.getNodeParameter('folderAttachMode', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
 	const path = this.getNodeParameter('path', itemIndex, '') as string;
 	const type = getResourceId(this.getNodeParameter('contentType', itemIndex, 'url') as string);
@@ -277,7 +354,7 @@ async function createContent(
 	body.append('name', name);
 	body.append('type', type);
 
-	switch (folderDestinationMode) {
+	switch (folderAttachMode) {
 		case 'pickFromList':
 			body.append('parent_folder_id', getResourceId(folderId));
 			break;
@@ -291,15 +368,15 @@ async function createContent(
 	}
 
 	if (BINARY_TYPES.includes(type)) {
-		const binaryData = this.getInputData()[itemIndex].binary?.[object];
+		const binaryData = this.helpers.assertBinaryData(itemIndex, object);
 		if (!binaryData) {
-			throw new Error(`No binary data found in "${object}" at item ${itemIndex}.`);
+			throw new NodeOperationError(this.getNode(), 'Binary data is required');
 		}
-		const fileBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, object);
-		body.append('object', fileBuffer, {
+		const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, object);
+		body.append('object', binaryDataBuffer, {
 			filename: binaryData.fileName || 'file',
 			contentType: binaryData.mimeType || 'application/octet-stream',
-			knownLength: binaryData.data.length,
+			knownLength: binaryDataBuffer.length,
 		});
 	}
 
@@ -343,16 +420,32 @@ async function getAllContents(
 	resource: string,
 	operation: string
 ): Promise<any> {
-	const path = this.getNodeParameter('path', itemIndex, '') as string;
+	const folderInspectMode = this.getNodeParameter('folderInspectMode', itemIndex, '') as string;
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as string;
+	const path = this.getNodeParameter('path', itemIndex, '') as string;
+	const name = this.getNodeParameter('name', itemIndex, '') as string;
+	const contentType = getResourceId(this.getNodeParameter('contentType', itemIndex, '') as string);
 
-	const body: Record<string, any> = {
-		path,
-		folder_id: getResourceId(folderId),
+	const params: Record<string, any> = {
+		name,
 	};
 
+	if (nonEmptyString(contentType)) {
+		params.type = contentType;
+	}
+
+	switch (folderInspectMode) {
+		case 'absolutePath':
+			params.folder_path = getResourceId(path);
+			break;
+		case 'pickFromList':
+			params.folder_id = getResourceId(folderId);
+			break;
+	}
+
 	const endpoint = '/api/contents/';
-	const response = await executeApiRequest.call(this, 'GET', endpoint, body);
+	const url = buildApiUrl(endpoint, params);
+	const response = await executeApiRequest.call(this, 'GET', url);
 	return response;
 }
 
