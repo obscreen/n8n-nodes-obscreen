@@ -35,12 +35,6 @@ export const slideOperations: INodeProperties[] = [
 				action: 'Create slide',
 			},
 			{
-				name: 'Create Notification',
-				value: 'createNotification',
-				description: 'Add a new slide notification to a playlist',
-				action: 'Create notification slide',
-			},
-			{
 				name: 'Delete',
 				value: 'delete',
 				description: 'Delete a slide permanently',
@@ -63,12 +57,6 @@ export const slideOperations: INodeProperties[] = [
 				value: 'update',
 				description: 'Update an existing slide',
 				action: 'Update slide',
-			},
-			{
-				name: 'Update Notification',
-				value: 'updateNotification',
-				description: 'Update an existing slide notification',
-				action: 'Update notification slide',
 			},
 			{
 				name: 'Update Positions',
@@ -502,12 +490,10 @@ export async function executeSlideOperation(
 		for (let i = 0; i < this.getInputData().length; i++) {
 		const resourceOperations: Record<string, Function> = {
 			create: createSlide.bind(this),
-			createNotification: createSlideNotification.bind(this),
 			delete: deleteSlide.bind(this),
 			get: getSlide.bind(this),
 			getAll: getAllSlides.bind(this),
 			update: updateSlide.bind(this),
-			updateNotification: updateSlideNotification.bind(this),
 			updatePositions: updateSlidePositions.bind(this),
 		};
 
@@ -613,71 +599,71 @@ async function createSlide(
 	return response;
 }
 
-async function createSlideNotification(
-	this: IExecuteFunctions,
-	itemIndex: number,
-	resource: string,
-	operation: string
-): Promise<any> {
-	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
-	const contentId = parseInt(getResourceId(contentIdValue), 10);
-	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
-	const playlistId = getResourceId(playlistIdValue);
-	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
-	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
-	const position = this.getNodeParameter('position', itemIndex, 999) as number;
-	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
+// async function createSlideNotification(
+// 	this: IExecuteFunctions,
+// 	itemIndex: number,
+// 	resource: string,
+// 	operation: string
+// ): Promise<any> {
+// 	const contentIdValue = this.getNodeParameter('contentId', itemIndex, '') as any;
+// 	const contentId = parseInt(getResourceId(contentIdValue), 10);
+// 	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
+// 	const playlistId = getResourceId(playlistIdValue);
+// 	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
+// 	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
+// 	const position = this.getNodeParameter('position', itemIndex, 999) as number;
+// 	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
 
-	const body: Record<string, any> = {
-		content_id: contentId,
-		playlist_id: playlistId,
-		enabled: enabled.toString(),
-		duration,
-		position,
-		scheduling: notificationScheduling,
-	};
+// 	const body: Record<string, any> = {
+// 		content_id: contentId,
+// 		playlist_id: playlistId,
+// 		enabled: enabled.toString(),
+// 		duration,
+// 		position,
+// 		scheduling: notificationScheduling,
+// 	};
 
-	if (notificationScheduling === 'datetime') {
-		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
-		const datetimeEnd = this.getNodeParameter('datetimeEnd', itemIndex, '') as string;
+// 	if (notificationScheduling === 'datetime') {
+// 		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
+// 		const datetimeEnd = this.getNodeParameter('datetimeEnd', itemIndex, '') as string;
 		
-		if (datetimeStart) {
-			if (!validateDateTimeFormat(datetimeStart)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
-			}
-			body.datetime_start = datetimeStart;
-		}
+// 		if (datetimeStart) {
+// 			if (!validateDateTimeFormat(datetimeStart)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
+// 			}
+// 			body.datetime_start = datetimeStart;
+// 		}
 		
-		if (datetimeEnd) {
-			if (!validateDateTimeFormat(datetimeEnd)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
-			}
-			body.datetime_end = datetimeEnd;
-		}
-	} else if (notificationScheduling === 'cron') {
-		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
-		const cronEnd = this.getNodeParameter('cronEnd', itemIndex, '') as string;
+// 		if (datetimeEnd) {
+// 			if (!validateDateTimeFormat(datetimeEnd)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
+// 			}
+// 			body.datetime_end = datetimeEnd;
+// 		}
+// 	} else if (notificationScheduling === 'cron') {
+// 		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
+// 		const cronEnd = this.getNodeParameter('cronEnd', itemIndex, '') as string;
 		
-		if (cronStart) {
-			if (!isValidCronExpression(cronStart)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
-			}
-			body.cron_start = cronStart;
-		}
+// 		if (cronStart) {
+// 			if (!isValidCronExpression(cronStart)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
+// 			}
+// 			body.cron_start = cronStart;
+// 		}
 		
-		if (cronEnd) {
-			if (!isValidCronExpression(cronEnd)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
-			}
-			body.cron_end = cronEnd;
-		}
-	}
+// 		if (cronEnd) {
+// 			if (!isValidCronExpression(cronEnd)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
+// 			}
+// 			body.cron_end = cronEnd;
+// 		}
+// 	}
 
-	const endpoint = '/api/slides/notifications';
+// 	const endpoint = '/api/slides/notifications';
 
-	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
-	return response;
-}
+// 	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
+// 	return response;
+// }
 
 async function deleteSlide(
 	this: IExecuteFunctions,
@@ -793,73 +779,73 @@ async function updateSlide(
 	return response;
 }
 
-async function updateSlideNotification(
-	this: IExecuteFunctions,
-	itemIndex: number,
-	resource: string,
-	operation: string
-): Promise<any> {
-	const slideIdValue = this.getNodeParameter('slideId', itemIndex, '') as any;
-	const slideId = getResourceId(slideIdValue);
-	const contentId = this.getNodeParameter('contentId', itemIndex, '') as string;
-	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
-	const playlistId = getResourceId(playlistIdValue);
-	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
-	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
-	const position = this.getNodeParameter('position', itemIndex, 999) as number;
-	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
+// async function updateSlideNotification(
+// 	this: IExecuteFunctions,
+// 	itemIndex: number,
+// 	resource: string,
+// 	operation: string
+// ): Promise<any> {
+// 	const slideIdValue = this.getNodeParameter('slideId', itemIndex, '') as any;
+// 	const slideId = getResourceId(slideIdValue);
+// 	const contentId = this.getNodeParameter('contentId', itemIndex, '') as string;
+// 	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
+// 	const playlistId = getResourceId(playlistIdValue);
+// 	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
+// 	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
+// 	const position = this.getNodeParameter('position', itemIndex, 999) as number;
+// 	const notificationScheduling = this.getNodeParameter('notificationScheduling', itemIndex, 'datetime') as string;
 
-	const body: Record<string, any> = {
-		enabled: enabled.toString(),
-		duration,
-		position,
-		scheduling: notificationScheduling,
-	};
+// 	const body: Record<string, any> = {
+// 		enabled: enabled.toString(),
+// 		duration,
+// 		position,
+// 		scheduling: notificationScheduling,
+// 	};
 	
-	if (contentId) body.content_id = parseInt(contentId, 10);
-	if (playlistId) body.playlist_id = playlistId;
+// 	if (contentId) body.content_id = parseInt(contentId, 10);
+// 	if (playlistId) body.playlist_id = playlistId;
 
-	if (notificationScheduling === 'datetime') {
-		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
-		const datetimeEnd = this.getNodeParameter('datetimeEnd', itemIndex, '') as string;
+// 	if (notificationScheduling === 'datetime') {
+// 		const datetimeStart = this.getNodeParameter('datetimeStart', itemIndex, '') as string;
+// 		const datetimeEnd = this.getNodeParameter('datetimeEnd', itemIndex, '') as string;
 		
-		if (datetimeStart) {
-			if (!validateDateTimeFormat(datetimeStart)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
-			}
-			body.datetime_start = datetimeStart;
-		}
+// 		if (datetimeStart) {
+// 			if (!validateDateTimeFormat(datetimeStart)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 09:00)');
+// 			}
+// 			body.datetime_start = datetimeStart;
+// 		}
 		
-		if (datetimeEnd) {
-			if (!validateDateTimeFormat(datetimeEnd)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
-			}
-			body.datetime_end = datetimeEnd;
-		}
-	} else if (notificationScheduling === 'cron') {
-		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
-		const cronEnd = this.getNodeParameter('cronEnd', itemIndex, '') as string;
+// 		if (datetimeEnd) {
+// 			if (!validateDateTimeFormat(datetimeEnd)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid datetime format. Use Y-m-d H:M format (e.g. 2024-01-15 17:00)');
+// 			}
+// 			body.datetime_end = datetimeEnd;
+// 		}
+// 	} else if (notificationScheduling === 'cron') {
+// 		const cronStart = this.getNodeParameter('cronStart', itemIndex, '') as string;
+// 		const cronEnd = this.getNodeParameter('cronEnd', itemIndex, '') as string;
 		
-		if (cronStart) {
-			if (!isValidCronExpression(cronStart)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
-			}
-			body.cron_start = cronStart;
-		}
+// 		if (cronStart) {
+// 			if (!isValidCronExpression(cronStart)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
+// 			}
+// 			body.cron_start = cronStart;
+// 		}
 		
-		if (cronEnd) {
-			if (!isValidCronExpression(cronEnd)) {
-				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
-			}
-			body.cron_end = cronEnd;
-		}
-	}
+// 		if (cronEnd) {
+// 			if (!isValidCronExpression(cronEnd)) {
+// 				throw new NodeOperationError(this.getNode(), 'Invalid cron expression format. Use * * * * * * * format');
+// 			}
+// 			body.cron_end = cronEnd;
+// 		}
+// 	}
 
-	const endpoint = `/api/slides/notifications/${slideId}`;
+// 	const endpoint = `/api/slides/notifications/${slideId}`;
 
-	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
-	return response;
-}
+// 	const response = await executeApiRequest.call(this, 'PUT', endpoint, body);
+// 	return response;
+// }
 
 async function updateSlidePositions(
 	this: IExecuteFunctions,
