@@ -2,26 +2,28 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n
 import { NodeOperationError } from 'n8n-workflow';
 import { executeApiRequest } from '../../utils';
 
-export const processOperations: INodeProperties = {
-	displayName: 'Operation',
-	name: 'operation',
-	type: 'options',
-	noDataExpression: true,
-	displayOptions: {
-		show: {
-			resource: ['process'],
+export const processOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['process'],
+			},
 		},
-	},
-	options: [
-		{
-			name: 'Refresh Player',
-			value: 'refreshPlayer',
-			description: 'Refresh player to apply changes',
-			action: 'Refresh player',
-		},
-	],
-	default: 'refreshPlayer',
-};
+		options: [
+			{
+				name: 'Refresh Player',
+				value: 'refreshPlayer',
+				description: 'Refresh player to apply changes',
+				action: 'Refresh player',
+			},
+		],
+		default: 'refreshPlayer',
+	}
+];
 
 export const processParameters: INodeProperties[] = [];
 

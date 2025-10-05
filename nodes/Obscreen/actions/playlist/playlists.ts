@@ -1,65 +1,67 @@
 import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { playlistMappings } from './mappings';
-import { executeApiRequest, getResourceId } from '../../utils';
+import { executeApiRequest, getResourceId, newResourceMapper, newResourceLocator } from '../../utils';
 export { searchPlaylists } from './search';
 
-export const playlistOperations: INodeProperties = {
-	displayName: 'Operation',
-	name: 'operation',
-	type: 'options',
-	noDataExpression: true,
-	displayOptions: {
-		show: {
-			resource: ['playlists'],
+export const playlistOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['playlists'],
+			},
 		},
-	},
-	options: [
-		{
-			name: 'Create',
-			value: 'create',
-			description: 'Create new playlist',
-			action: 'Create playlist',
-		},
-		{
-			name: 'Delete',
-			value: 'delete',
-			description: 'Delete playlist permanently',
-			action: 'Delete playlist',
-		},
-		{
-			name: 'Get',
-			value: 'get',
-			description: 'Get playlist information by ID',
-			action: 'Get playlist',
-		},
-		{
-			name: 'Get Many',
-			value: 'getAll',
-			description: 'Retrieve list of playlists',
-			action: 'Get many playlists',
-		},
-		{
-			name: 'Get Notifications',
-			value: 'getNotifications',
-			description: 'Get notifications associated with playlist',
-			action: 'Get playlist notifications',
-		},
-		{
-			name: 'Get Slides',
-			value: 'getSlides',
-			description: 'Get slides associated with playlist',
-			action: 'Get playlist slides',
-		},
-		{
-			name: 'Update',
-			value: 'update',
-			description: 'Update playlist',
-			action: 'Update playlist',
-		},
-	],
-	default: 'get',
-};
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create new playlist',
+				action: 'Create playlist',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete playlist permanently',
+				action: 'Delete playlist',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get playlist information by ID',
+				action: 'Get playlist',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve list of playlists',
+				action: 'Get many playlists',
+			},
+			{
+				name: 'Get Notifications',
+				value: 'getNotifications',
+				description: 'Get notifications associated with playlist',
+				action: 'Get playlist notifications',
+			},
+			{
+				name: 'Get Slides',
+				value: 'getSlides',
+				description: 'Get slides associated with playlist',
+				action: 'Get playlist slides',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update playlist',
+				action: 'Update playlist',
+			},
+		],
+		default: 'get',
+	}
+];
 
 export const playlistParameters: INodeProperties[] = [
 	/** Playlist Name */
@@ -80,101 +82,35 @@ export const playlistParameters: INodeProperties[] = [
 	/**
 	 * Playlist Selector
 	 */
-	{
-		displayName: 'Playlist',
+	newResourceLocator({
 		name: 'playlistId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a playlist...',
-				typeOptions: {
-					searchListMethod: 'searchPlaylists',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. playlist-123',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['playlists'],
-				operation: ['delete', 'get', 'getNotifications', 'getSlides', 'update'],
-			},
+		label: 'playlist',
+		searchListMethod: 'searchPlaylists',
+		show: {
+			resource: ['playlists'],
+			operation: ['delete', 'get', 'getNotifications', 'getSlides', 'update'],
 		},
-	},
+	}),
 	/**
 	 * Fields for Create
 	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
+	newResourceMapper({
+		resourceMapperMethod: 'playlistCreateMappingColumns',
+		show: {
+			resource: ['playlists'],
+			operation: ['create'],
 		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'playlistCreateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['playlists'],
-				operation: ['create'],
-			},
-		},
-	},
+	}),
 	/**
 	 * Fields for Update
 	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
+	newResourceMapper({
+		resourceMapperMethod: 'playlistUpdateMappingColumns',
+		show: {
+			resource: ['playlists'],
+			operation: ['update'],
 		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'playlistUpdateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['playlists'],
-				operation: ['update'],
-			},
-		},
-	},
+	}),
 ];
 
 export async function playlistCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {

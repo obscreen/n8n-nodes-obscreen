@@ -1,99 +1,79 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
-import { executeApiRequest, getResourceId } from '../../utils';
+import { executeApiRequest, getResourceId, newResourceLocator } from '../../utils';
 export { searchFolders } from './search';
 
-export const contentFolderOperations: INodeProperties = {
-    displayName: 'Operation',
-    name: 'operation',
-    type: 'options',
-    noDataExpression: true,
-    displayOptions: {
-        show: {
-            resource: ['contentFolders'],
-        },
-    },
-    options: [
-        {
-            name: 'Create',
-            value: 'create',
-            description: 'Create a new content folder',
-            action: 'Create content folder',
-        },
-        {
-            name: 'Delete',
-            value: 'delete',
-            description: 'Delete a content folder',
-            action: 'Delete content folder',
-        },
-        {
-            name: 'Get',
-            value: 'get',
-            description: 'Retrieve content folder',
-            action: 'Get content folder',
-        },
-        {
-            name: 'Get Many',
-            value: 'getAll',
-            description: 'Retrieve a list of content folders',
-            action: 'Get many content folders',
-        },
-		{
-			name: 'Move Folder',
-			value: 'moveFolderToFolder',
-			description: 'Move folder to another folder',
-			action: 'Move folder to another folder',
+export const contentFolderOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['contentFolders'],
+			},
 		},
-		{
-			name: 'Move Many Content Folder',
-			value: 'moveContentsToFolder',
-			description: 'Move multiple content items to another folder',
-			action: 'Move many content to folder',
-		},
-        {
-            name: 'Update',
-            value: 'update',
-            description: 'Update a content folder',
-            action: 'Update content folder',
-        },
-    ],
-    default: 'getAll',
-};
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Create a new content folder',
+				action: 'Create content folder',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete a content folder',
+				action: 'Delete content folder',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Retrieve content folder',
+				action: 'Get content folder',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve a list of content folders',
+				action: 'Get many content folders',
+			},
+			{
+				name: 'Move Folder',
+				value: 'moveFolderToFolder',
+				description: 'Move folder to another folder',
+				action: 'Move folder to another folder',
+			},
+			{
+				name: 'Move Many Content Folder',
+				value: 'moveContentsToFolder',
+				description: 'Move multiple content items to another folder',
+				action: 'Move many content to folder',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update a content folder',
+				action: 'Update content folder',
+			},
+		],
+		default: 'getAll',
+	}
+];
 
 export const contentFolderParameters: INodeProperties[] = [
 	/**
 	 * Folder Selector
 	 */
-	{
-		displayName: 'Folder',
+	newResourceLocator({
 		name: 'folderId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a folder...',
-				typeOptions: {
-					searchListMethod: 'searchFolders',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 456',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['contentFolders'],
-				operation: [ 'delete', 'update', 'moveFolderToFolder', 'get'],
-			},
+		label: 'folder',
+		searchListMethod: 'searchFolders',
+		show: {
+			resource: ['contentFolders'],
+			operation: ['delete', 'update', 'moveFolderToFolder', 'get'],
 		},
-	},
+	}),
 	/** Folder Name */
 	{
 		displayName: 'Folder Name',
@@ -112,36 +92,15 @@ export const contentFolderParameters: INodeProperties[] = [
 	/**
 	 * Parent Folder Selector
 	 */
-	{
-		displayName: 'Parent Folder',
+	newResourceLocator({
 		name: 'parentFolderId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a parent folder...',
-				typeOptions: {
-					searchListMethod: 'searchFolders',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 456',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['contentFolders'],
-				operation: ['create', 'update', 'moveContentsToFolder', 'moveFolderToFolder'],
-			},
+		label: 'parent folder',
+		searchListMethod: 'searchFolders',
+		show: {
+			resource: ['contentFolders'],
+			operation: ['create', 'update', 'moveContentsToFolder', 'moveFolderToFolder'],
 		},
-	},
+	}),
 	/**
 	 * Contents Collection
 	 */

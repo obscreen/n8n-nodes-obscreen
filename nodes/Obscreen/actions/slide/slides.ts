@@ -7,178 +7,116 @@ import {
 	isValidCronExpression,
 	validateDateTimeFormat,
 	validateTimeFormat,
-	validateDayOfWeek
+	validateDayOfWeek,
+	newResourceMapper,
+	newResourceLocator
 } from '../../utils';
 import { slideMappings } from './mappings';
 import type { SlidePositions } from '../../types';
 export { searchSlides } from './search';
 
-export const slideOperations: INodeProperties = {
-	displayName: 'Operation',
-	name: 'operation',
-	type: 'options',
-	noDataExpression: true,
-	displayOptions: {
-		show: {
-			resource: ['slides'],
+export const slideOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+			},
 		},
-	},
-	options: [
-		{
-			name: 'Create',
-			value: 'create',
-			description: 'Add a new slide to a playlist',
-			action: 'Create slide',
-		},
-		{
-			name: 'Create Notification',
-			value: 'createNotification',
-			description: 'Add a new slide notification to a playlist',
-			action: 'Create notification slide',
-		},
-		{
-			name: 'Delete',
-			value: 'delete',
-			description: 'Delete a slide permanently',
-			action: 'Delete slide',
-		},
-		{
-			name: 'Get',
-			value: 'get',
-			description: 'Get slide information by ID',
-			action: 'Get slide',
-		},
-		{
-			name: 'Get Many',
-			value: 'getAll',
-			description: 'Retrieve a list of slides',
-			action: 'Get many slides',
-		},
-		{
-			name: 'Update',
-			value: 'update',
-			description: 'Update an existing slide',
-			action: 'Update slide',
-		},
-		{
-			name: 'Update Notification',
-			value: 'updateNotification',
-			description: 'Update an existing slide notification',
-			action: 'Update notification slide',
-		},
-		{
-			name: 'Update Positions',
-			value: 'updatePositions',
-			description: 'Update positions of multiple slides',
-			action: 'Update slide positions',
-		},
-	],
-	default: 'get',
-};
+		options: [
+			{
+				name: 'Create',
+				value: 'create',
+				description: 'Add a new slide to a playlist',
+				action: 'Create slide',
+			},
+			{
+				name: 'Create Notification',
+				value: 'createNotification',
+				description: 'Add a new slide notification to a playlist',
+				action: 'Create notification slide',
+			},
+			{
+				name: 'Delete',
+				value: 'delete',
+				description: 'Delete a slide permanently',
+				action: 'Delete slide',
+			},
+			{
+				name: 'Get',
+				value: 'get',
+				description: 'Get slide information by ID',
+				action: 'Get slide',
+			},
+			{
+				name: 'Get Many',
+				value: 'getAll',
+				description: 'Retrieve a list of slides',
+				action: 'Get many slides',
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				description: 'Update an existing slide',
+				action: 'Update slide',
+			},
+			{
+				name: 'Update Notification',
+				value: 'updateNotification',
+				description: 'Update an existing slide notification',
+				action: 'Update notification slide',
+			},
+			{
+				name: 'Update Positions',
+				value: 'updatePositions',
+				description: 'Update positions of multiple slides',
+				action: 'Update slide positions',
+			},
+		],
+		default: 'get',
+	}
+];
 
 export const slideParameters: INodeProperties[] = [
 	/**
 	 * Slide Selector
 	 */
-	{
-		displayName: 'Slide',
+	newResourceLocator({
 		name: 'slideId',
-		type: 'resourceLocator',
-		default: { mode: 'id', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a slide...',
-				typeOptions: {
-					searchListMethod: 'searchSlides',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 123',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['delete', 'get', 'update', 'updateNotification'],
-			},
+		label: 'slide',
+		searchListMethod: 'searchSlides',
+		show: {
+			resource: ['slides'],
+			operation: ['delete', 'get', 'update', 'updateNotification'],
 		},
-	},
+	}),
 	/**
 	 * Content Selector
 	 */
-	{
-		displayName: 'Content',
+	newResourceLocator({
+		label: 'content',
 		name: 'contentId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a content...',
-				typeOptions: {
-					searchListMethod: 'searchContents',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. 456',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-			},
+		searchListMethod: 'searchContents',
+		show: {
+			resource: ['slides'],
+			operation: ['create', 'createNotification', 'update', 'updateNotification'],
 		},
-	},
+	}),
 	/**
 	 * Playlist Selector
 	 */
-	{
-		displayName: 'Playlist',
+	newResourceLocator({
 		name: 'playlistId',
-		type: 'resourceLocator',
-		default: { mode: 'list', value: '' },
-		required: true,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				type: 'list',
-				placeholder: 'Select a playlist...',
-				typeOptions: {
-					searchListMethod: 'searchPlaylists',
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'ID',
-				name: 'id',
-				type: 'string',
-				placeholder: 'e.g. playlist-123',
-			},
-		],
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create', 'createNotification', 'update', 'updateNotification'],
-			},
+		label: 'playlist',
+		searchListMethod: 'searchPlaylists',
+		show: {
+			resource: ['slides'],
+			operation: ['create', 'createNotification', 'update', 'updateNotification'],
 		},
-	},
+	}),
 	/**
 	 * Enabled
 	 */
@@ -508,67 +446,23 @@ export const slideParameters: INodeProperties[] = [
 	/**
 	 * Fields for Create
 	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
+	newResourceMapper({
+		resourceMapperMethod: 'slideCreateMappingColumns',
+		show: {
+			resource: ['slides'],
+			operation: ['create'],
 		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'slideCreateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['create'],
-			},
-		},
-	},
+	}),
 	/**
 	 * Fields for Update
 	 */
-	{
-		displayName: 'Fields',
-		name: 'fields',
-		type: 'resourceMapper',
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
+	newResourceMapper({
+		resourceMapperMethod: 'slideUpdateMappingColumns',
+		show: {
+			resource: ['slides'],
+			operation: ['update'],
 		},
-		required: true,
-		typeOptions: {
-			resourceMapper: {
-				resourceMapperMethod: 'slideUpdateMappingColumns',
-				mode: 'add',
-				fieldWords: {
-					singular: 'field',
-					plural: 'fields',
-				},
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: true,
-			},
-		},
-		displayOptions: {
-			show: {
-				resource: ['slides'],
-				operation: ['update'],
-			},
-		},
-	},
+	}),
 ];
 
 export async function slideCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {

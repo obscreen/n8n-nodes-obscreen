@@ -40,3 +40,40 @@ export async function searchContents(
         results: results.slice(0, SEARCH_LIMIT),
     };
 }
+
+export async function searchContentTypes(
+    this: ILoadOptionsFunctions,
+    query?: string,
+): Promise<INodeListSearchResult> {
+    const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
+    const baseUrl = credentials?.instanceUrl?.replace(/\/$/, '') || '';
+    
+    const endpoint = '/api/contents/types';
+    const fullUrl = `${baseUrl}${endpoint}`;
+
+    const response = await this.helpers.httpRequestWithAuthentication.call(this, 'obscreenApi', {
+        method: 'GET',
+        url: fullUrl,
+        returnFullResponse: true,
+    });
+    
+    const contentTypes = Array.isArray(response.body) ? response.body : [];
+    
+    // Filter content types based on query if provided
+    let filteredContentTypes = contentTypes;
+    if (query) {
+        filteredContentTypes = contentTypes.filter((contentType: any) => 
+            contentType.name?.toLowerCase().includes(query.toLowerCase())
+        );
+    }
+    
+    // Format results for listSearch
+    const results = filteredContentTypes.map((contentType: any) => ({
+        name: contentType.name || `Content Type ${contentType.id}`,
+        value: contentType.id,
+    }));
+    
+    return {
+        results: results
+    };
+}
