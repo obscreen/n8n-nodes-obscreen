@@ -7,7 +7,7 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 // Import actions from modular structure
-import { contentOperations, contentParameters, executeContentOperation, contentCreateMappingColumns, contentUpdateMappingColumns, searchContents } from './actions/content/contents';
+import { contentOperations, contentParameters, executeContentOperation, searchContents, searchContentTypes } from './actions/content/contents';
 import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation, searchFolders } from './actions/contentFolder/contentFolders';
 import { playlistOperations, playlistParameters, executePlaylistOperation, playlistCreateMappingColumns, playlistUpdateMappingColumns, searchPlaylists } from './actions/playlist/playlists';
 import { slideOperations, slideParameters, executeSlideOperation, slideCreateMappingColumns, slideUpdateMappingColumns, searchSlides } from './actions/slide/slides';
@@ -64,7 +64,7 @@ export class Obscreen implements INodeType {
 				default: 'contents',
 			},
 			// Dynamic operation options based on resource selection
-			contentOperations,
+			...contentOperations,
 			...contentFolderOperations,
 			...playlistOperations,
 			...slideOperations,
@@ -82,7 +82,7 @@ export class Obscreen implements INodeType {
 		listSearch: {
 			searchPlaylists,
 			searchContents,
-			// searchContentTypes,
+			searchContentTypes,
 			searchSlides,
 			searchFolders,
 		},
@@ -91,8 +91,6 @@ export class Obscreen implements INodeType {
 			playlistUpdateMappingColumns,
 			slideCreateMappingColumns,
 			slideUpdateMappingColumns,
-			contentCreateMappingColumns,
-			contentUpdateMappingColumns,
 		},
 	};
 

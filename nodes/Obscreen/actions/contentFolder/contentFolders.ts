@@ -118,31 +118,11 @@ export const contentFolderParameters: INodeProperties[] = [
 				name: 'contentIds',
 				displayName: 'Contents',
 				values: [
-					{
-						displayName: 'Content',
+					newResourceLocator({
+						label: 'content',
 						name: 'contentId',
-						type: 'resourceLocator',
-						default: { mode: 'list', value: '' },
-						required: true,
-						modes: [
-							{
-								displayName: 'From List',
-								name: 'list',
-								type: 'list',
-								placeholder: 'Select a content...',
-								typeOptions: {
-									searchListMethod: 'searchContents',
-									searchable: true,
-								},
-							},
-							{
-								displayName: 'ID',
-								name: 'id',
-								type: 'string',
-								placeholder: 'e.g. 456',
-							},
-						],
-					},
+						searchListMethod: 'searchContents',
+					}),
 				],
 			},
 		],
