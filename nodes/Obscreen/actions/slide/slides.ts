@@ -84,6 +84,7 @@ export const slideParameters: INodeProperties[] = [
 	 * Slide Selector
 	 */
 	newResourceLocator({
+		displayName: 'Slide',
 		name: 'slideId',
 		label: 'slide',
 		searchListMethod: 'searchSlides',
@@ -96,6 +97,7 @@ export const slideParameters: INodeProperties[] = [
 	 * Content Selector
 	 */
 	newResourceLocator({
+		displayName: 'Content',
 		label: 'content',
 		name: 'contentId',
 		searchListMethod: 'searchContents',
@@ -108,6 +110,7 @@ export const slideParameters: INodeProperties[] = [
 	 * Playlist Selector
 	 */
 	newResourceLocator({
+		displayName: 'Playlist',
 		name: 'playlistId',
 		label: 'playlist',
 		searchListMethod: 'searchPlaylists',
