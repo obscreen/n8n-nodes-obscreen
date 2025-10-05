@@ -24,13 +24,13 @@ export async function searchSlides(
     let filteredSlides = slides;
     if (query) {
         filteredSlides = slides.filter((slide: any) => 
-            slide.label?.toLowerCase().includes(query.toLowerCase())
+            slide.name?.toLowerCase().includes(query.toLowerCase())
         );
     }
     
     // Format results for listSearch
     const results = filteredSlides.map((slide: any) => ({
-        name: slide.label || `Slide ${slide.id}`,
+        name: slide.name || `Slide ${slide.id}`,
         value: slide.id,
         description: slide.description || '',
         url: slide.url || '',

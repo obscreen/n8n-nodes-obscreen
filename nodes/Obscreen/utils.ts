@@ -32,6 +32,12 @@ export function isValidCronExpression(cron: string): boolean {
 
 export function validateDateTimeFormat(dateTime: string): boolean {
 	// Format: YYYY-MM-DD HH:mm
+	const dateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+	return dateTimeRegex.test(dateTime);
+}
+
+export function validateDateTimeFormatWithoutSeconds(dateTime: string): boolean {
+	// Format: YYYY-MM-DD HH:mm
 	const dateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 	return dateTimeRegex.test(dateTime);
 }
