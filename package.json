@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-obscreen",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "N8N community node for Obscreen digital signage platform",
   "keywords": [
     "n8n-community-node-package",
