@@ -109,5 +109,5 @@ npm start
 
 ## Version history
 
-### 0.1.0
+### 1.0.0
 - Initial release of the Obscreen node.
