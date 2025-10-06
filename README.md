@@ -1,48 +1,113 @@
 ![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
 
-# n8n-nodes-starter
+# n8n-nodes-obscreen
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
+This is an n8n community node. It lets you use Obscreen API in your n8n workflows.
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+Obscreen is a cloud-based/self-hosted digital signage platform that allows you to manage your digital signage content and playlists.
 
-If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
+[n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
-## Prerequisites
+[Installation](#installation)  
+[Operations](#operations)  
+[Credentials](#credentials)  
+[Compatibility](#compatibility)  
+[Usage](#usage)  
+[Resources](#resources)  
+[Version history](#version-history)  
 
-You need the following installed on your development machine:
+## Installation
 
-* [git](https://git-scm.com/downloads)
-* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  npm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
-## Using this starter
+## Operations
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+> Content
+- List all contents
+- Add new content
+- Update existing content
+- Delete content
+- Get content by ID
+- Get content location by ID
+- Get available content types
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
-   ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `npm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+> Content Folder
+- List all content folders
+- Add new content folder
+- Update a folder
+- Delete a folder
+- Move multiple contents to a folder
 
-## More information
+> Playlist
+- List all playlists
+- Add a playlist
+- Update existing playlist
+- Delete playlist
+- Get playlist by ID
+- Get regular slides associated with playlist
+- Get notifications slides associated with playlist
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+> Slide
+- List all slides
+- Add a regular slide
+- Add a notification slide
+- Update existing slide
+- Delete slide
+- Get slide by ID
 
-## License
+> Process
+- Refresh player
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+## Credentials
+
+To use this node, you need to authenticate with your Obscreen Instance. You will need:
+
+1. An Obscreen Instance with the Core API plugin enabled (Premium feature)
+1. Your Obscreen Instance URL
+2. Your Obscreen API Key (you can get it from any user's security settings)
+
+**Optional Security Note**: You can configure your instance to permit unauthenticated access to the API. If you do so, you can set a random value as the API Key.
+
+## Compatibility
+
+This node is compatible with n8n version 0.150.0 and above. It has been tested with the latest version of n8n.
+
+## Usage
+
+This node allows you to manage your Obscreen Instance using the Core API plugin. You can create, update, delete, get, get many, get types, get location contents, content folders, playlists, slides, and processes.
+
+## Development
+
+To develop this node, you can use the following commands:
+
+```bash
+npm install
+npm link
+npm run dev
+```
+In a separate terminal, run the following command to start the n8n server:
+
+Locate the n8n directory and run the following 
+( Note: to locate the .n8n directory - when starting the server `n8n start` look for the message: "User settings loaded from: ..." ) 
+
+command:
+```bash
+cd .n8n
+# ensure the custom folder is in the .n8n directory with npm initialised
+mkdir custom    
+cd custom 
+npm init
+npm link @n8n-nodes-obscreen
+npm start
+```
+
+
+## Resources
+
+* [n8n community nodes documentation](https://docs.n8n.io/integrations/community-nodes/)
+* [Obscreen documentation](https://docs.obscreen.io/)
+
+## Version history
+
+### 0.1.0
+- Initial release of the Obscreen node.
