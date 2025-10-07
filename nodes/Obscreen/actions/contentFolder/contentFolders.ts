@@ -29,13 +29,13 @@ export const contentFolderOperations: INodeProperties[] = [
 			{
 				name: 'Get',
 				value: 'get',
-				description: 'Retrieve content folder',
+				description: 'Get content folder',
 				action: 'Get content folder',
 			},
 			{
 				name: 'Get Many',
 				value: 'getAll',
-				description: 'Retrieve a list of content folders',
+				description: 'Get many content folders',
 				action: 'Get many content folders',
 			},
 			{
@@ -47,7 +47,7 @@ export const contentFolderOperations: INodeProperties[] = [
 			{
 				name: 'Move Many Content Folder',
 				value: 'moveContentsToFolder',
-				description: 'Move multiple content items to another folder',
+				description: 'Move many content items to another folder',
 				action: 'Move many content to folder',
 			},
 			{
