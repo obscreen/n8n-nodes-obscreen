@@ -1,8 +1,7 @@
 import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import { buildApiUrl, executeApiRequest, getResourceId, newResourceLocator, nonEmptyString } from '../../utils';
+import { buildApiUrl, executeApiRequest, getResourceId, newResourceLocator, nonEmptyString, createMultipartBody } from '../../utils';
 export { searchContents, searchContentTypes } from './search';
-import FormData from 'form-data';
 
 const BINARY_TYPES = ['picture', 'video'];
 const TEXT_TYPES = ['url', 'youtube', 'html', 'text', 'external_storage', 'playlist_embed'];
@@ -354,21 +353,23 @@ async function createContent(
 
 	const endpoint = '/api/contents/';
 
-	const body = new FormData();
-	body.append('name', name);
-	body.append('type', type);
+	// Build form fields
+	const formFields: Record<string, any> = {
+		name: name,
+		type: type,
+	};
 
 	switch (folderAttachMode) {
 		case 'pickFromList':
-			body.append('parent_folder_id', getResourceId(folderId));
+			formFields.parent_folder_id = getResourceId(folderId);
 			break;
 		case 'absolutePath':
-			body.append('parent_folder_path', path);
+			formFields.parent_folder_path = path;
 			break;
 	}
 
 	if (location) {
-		body.append('location', location);
+		formFields.location = location;
 	}
 
 	if (BINARY_TYPES.includes(type)) {
@@ -377,14 +378,17 @@ async function createContent(
 			throw new NodeOperationError(this.getNode(), 'Binary data is required');
 		}
 		const binaryDataBuffer = await this.helpers.getBinaryDataBuffer(itemIndex, object);
-		body.append('object', binaryDataBuffer, {
-			filename: binaryData.fileName || 'file',
-			contentType: binaryData.mimeType || 'application/octet-stream',
-			knownLength: binaryDataBuffer.length,
-		});
+		formFields.object = binaryDataBuffer;
 	}
 
-	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
+	// Create multipart body manually
+	const { body, contentType } = createMultipartBody(formFields);
+
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body, {
+		headers: {
+			'Content-Type': contentType,
+		},
+	});
 	return response;
 }
 

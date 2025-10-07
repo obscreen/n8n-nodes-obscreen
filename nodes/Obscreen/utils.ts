@@ -1,9 +1,42 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import FormData from 'form-data';
+import { Buffer } from 'buffer';
 
 export function nonEmptyString(value: string): boolean {
 	return value !== undefined && value !== null && value !== '';
+}
+
+export function createMultipartBody(fields: Record<string, any>, boundary?: string): { body: Buffer; contentType: string } {
+	const boundaryString = boundary || `----formdata-n8n-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	const parts: Buffer[] = [];
+	
+	for (const [key, value] of Object.entries(fields)) {
+		if (value === undefined || value === null) continue;
+		
+		// Add boundary
+		parts.push(Buffer.from(`--${boundaryString}\r\n`));
+		
+		if (value instanceof Buffer) {
+			// Binary data
+			parts.push(Buffer.from(`Content-Disposition: form-data; name="${key}"; filename="file"\r\n`));
+			parts.push(Buffer.from(`Content-Type: application/octet-stream\r\n\r\n`));
+			parts.push(value);
+		} else {
+			// Text data
+			parts.push(Buffer.from(`Content-Disposition: form-data; name="${key}"\r\n\r\n`));
+			parts.push(Buffer.from(String(value)));
+		}
+		
+		parts.push(Buffer.from('\r\n'));
+	}
+	
+	// Add final boundary
+	parts.push(Buffer.from(`--${boundaryString}--\r\n`));
+	
+	return {
+		body: Buffer.concat(parts),
+		contentType: `multipart/form-data; boundary=${boundaryString}`
+	};
 }
 
 export function buildApiUrl(endpoint: string, params?: Record<string, any>): string {
@@ -104,14 +137,21 @@ export async function executeApiRequest(
 		json: true,
 		skipSslCertificateValidation: true,
 		headers: {
-			'Content-Type': body instanceof FormData ? 'multipart/form-data' : 'application/json',
 			...(additionalOptions?.headers || {}),
 		},
 		...additionalOptions,
 	};
 
 	if (body) {
-		options.body = body;
+		if (body instanceof Buffer) {
+			// For Buffer body, don't set json: true and let the content-type header handle it
+			options.json = false;
+			options.body = body;
+		} else {
+			// For regular JSON body
+			options.headers['Content-Type'] = 'application/json';
+			options.body = body;
+		}
 	}
 
 	this.logger.debug('executeApiRequest called with:', { method, url, options, body, additionalOptions });
