@@ -22,31 +22,31 @@ export const contentOperations: INodeProperties[] = [
 			{
 				name: 'Create',
 				value: 'create',
-				description: 'Create content',
+				description: 'Create a content',
 				action: 'Create content',
 			},
 			{
 				name: 'Delete',
 				value: 'delete',
-				description: 'Delete content permanently',
+				description: 'Delete a content',
 				action: 'Delete content',
 			},
 			{
 				name: 'Get',
 				value: 'get',
-				description: 'Get content information by ID',
+				description: 'Get a content',
 				action: 'Get content',
 			},
 			{
 				name: 'Get Location',
 				value: 'getLocation',
-				description: 'Get content location by ID',
+				description: 'Get content location',
 				action: 'Get content location',
 			},
 			{
 				name: 'Get Many',
 				value: 'getAll',
-				description: 'Retrieve a list of contents',
+				description: 'Get many contents',
 				action: 'Get many contents',
 			},
 			{
@@ -58,7 +58,7 @@ export const contentOperations: INodeProperties[] = [
 			{
 				name: 'Update',
 				value: 'update',
-				description: 'Update existing content',
+				description: 'Update a content',
 				action: 'Update content',
 			},
 		],

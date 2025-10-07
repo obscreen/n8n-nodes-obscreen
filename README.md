@@ -27,8 +27,8 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 - Add new content
 - Update existing content
 - Delete content
-- Get content by ID
-- Get content location by ID
+- Get content
+- Get content location
 - Get available content types
 
 > Content Folder
@@ -43,7 +43,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 - Add a playlist
 - Update existing playlist
 - Delete playlist
-- Get playlist by ID
+- Get playlist
 - Get regular slides associated with playlist
 - Get notifications slides associated with playlist
 
@@ -53,7 +53,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 - Add a notification slide
 - Update existing slide
 - Delete slide
-- Get slide by ID
+- Get slide
 
 > Process
 - Refresh player
