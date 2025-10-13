@@ -192,8 +192,9 @@ interface GetResourceLocatorProps {
 	label?: string;
 	searchListMethod: string;
 	show?: Record<string, string[]>;
+	hide?: Record<string, string[]>;
 }
-export function newResourceLocator({displayName, name, label, searchListMethod, show}: GetResourceLocatorProps): INodeProperties {
+export function newResourceLocator({displayName, name, label, searchListMethod, show, hide}: GetResourceLocatorProps): INodeProperties {
 	const properties: INodeProperties = {
 		displayName: displayName,
 		name: name,
@@ -224,6 +225,12 @@ export function newResourceLocator({displayName, name, label, searchListMethod, 
 			properties.displayOptions = {};
 		}
 		properties.displayOptions.show = show;
+	}
+	if (hide) {
+		if (!properties.displayOptions) {
+			properties.displayOptions = {};
+		}
+		properties.displayOptions.hide = hide;
 	}
 
 	return properties;

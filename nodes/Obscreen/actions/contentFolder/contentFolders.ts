@@ -1,5 +1,5 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
-import { executeApiRequest, getResourceId, newResourceLocator } from '../../utils';
+import { executeApiRequest, getResourceId, newResourceLocator, buildApiUrl } from '../../utils';
 export { searchFolders } from './search';
 
 export const contentFolderOperations: INodeProperties[] = [
@@ -63,6 +63,36 @@ export const contentFolderOperations: INodeProperties[] = [
 
 export const contentFolderParameters: INodeProperties[] = [
 	/**
+	 * Folder Inspect Mode
+	 */
+	{
+		displayName: 'Folder Inspect Mode',
+		name: 'folderInspectMode',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['contentFolders'],
+				operation: ['get'],
+			},
+		},
+		options: [
+			{
+				name: 'Pick From List',
+				value: 'pickFromList',
+				description: 'Pick a folder from list',
+				action: 'Pick from list',
+			},
+			{
+				name: 'Absolute Path',
+				value: 'absolutePath',
+				description: 'Absolute path of the folder',
+				action: 'Absolute path',
+			},
+		],
+		default: 'pickFromList',
+	},
+	/**
 	 * Folder Selector
 	 */
 	newResourceLocator({
@@ -74,7 +104,28 @@ export const contentFolderParameters: INodeProperties[] = [
 			resource: ['contentFolders'],
 			operation: ['delete', 'update', 'moveFolderToFolder', 'get'],
 		},
+		hide: {
+			folderInspectMode: ['absolutePath'],
+		},
 	}),
+	/**
+	 * Folder Path
+	 */
+	{
+		displayName: 'Folder Path',
+		name: 'path',
+		type: 'string',
+		default: '',
+		placeholder: 'e.g. /my-folder',
+		description: 'Path context (with path starting with /)',
+		displayOptions: {
+			show: {
+				resource: ['contentFolders'],
+				operation: ['get'],
+				folderInspectMode: ['absolutePath'],
+			},
+		},
+	},
 	/** Folder Name */
 	{
 		displayName: 'Folder Name',
@@ -247,8 +298,25 @@ async function moveContentsToFolder(
 
 async function getContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const folderId = this.getNodeParameter('folderId', itemIndex, '') as number;
-	const endpoint = `/api/contents-folders/${getResourceId(folderId)}`;
-	return await executeApiRequest.call(this, 'GET', endpoint);
+	const folderInspectMode = this.getNodeParameter('folderInspectMode', itemIndex, '') as string;
+	const path = this.getNodeParameter('path', itemIndex, '') as string;
+
+	const params: Record<string, any> = {};
+	let endpoint = '';
+
+	switch (folderInspectMode) {
+		case 'absolutePath':
+			endpoint = `/api/contents-folders/from-path`;
+			params.path = path;
+			break;
+		case 'pickFromList':
+			endpoint = `/api/contents-folders/${getResourceId(folderId)}`;
+			break;
+	}
+
+	const url = buildApiUrl(endpoint, params);
+
+	return await executeApiRequest.call(this, 'GET', url);
 }
 
 async function updateContentFolder(this: IExecuteFunctions, itemIndex: number): Promise<any> {
