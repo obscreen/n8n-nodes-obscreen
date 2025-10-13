@@ -1,6 +1,5 @@
 import type { IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
-import FormData from 'form-data';
 
 export function nonEmptyString(value: string): boolean {
 	return value !== undefined && value !== null && value !== '';
@@ -92,6 +91,7 @@ export async function executeApiRequest(
 	method: 'GET' | 'POST' | 'PUT' | 'DELETE',
 	url: string,
 	body?: any,
+	multipart?: boolean,
 	additionalOptions?: Record<string, any>
 ): Promise<any> {
 	const credentials = await this.getCredentials('obscreenApi') as { instanceUrl?: string; apiKey?: string };
@@ -104,7 +104,7 @@ export async function executeApiRequest(
 		json: true,
 		skipSslCertificateValidation: true,
 		headers: {
-			'Content-Type': body instanceof FormData ? 'multipart/form-data' : 'application/json',
+			'Content-Type': multipart ? 'multipart/form-data' : 'application/json',
 			...(additionalOptions?.headers || {}),
 		},
 		...additionalOptions,
