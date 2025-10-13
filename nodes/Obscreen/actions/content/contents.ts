@@ -2,7 +2,6 @@ import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n
 import { NodeOperationError } from 'n8n-workflow';
 import { buildApiUrl, executeApiRequest, getResourceId, newResourceLocator, nonEmptyString } from '../../utils';
 export { searchContents, searchContentTypes } from './search';
-import FormData from 'form-data';
 
 const BINARY_TYPES = ['picture', 'video'];
 const TEXT_TYPES = ['url', 'youtube', 'html', 'text', 'external_storage', 'playlist_embed'];
@@ -338,6 +337,7 @@ export async function executeContentOperation(
 	}
 }
 
+const getFormDataClass = () => { try { return eval('require')('form-data'); } catch { try { return eval('require')('form-data'); } catch { return null; } } };
 async function createContent(
 	this: IExecuteFunctions,
 	itemIndex: number,
@@ -354,7 +354,13 @@ async function createContent(
 
 	const endpoint = '/api/contents/';
 
-	const body = new FormData();
+	// Utiliser FormData de manière cachée
+	const FormDataClass = getFormDataClass();
+	if (!FormDataClass) {
+		throw new NodeOperationError(this.getNode(), 'FormData not available');
+	}
+	
+	const body = new FormDataClass();
 	body.append('name', name);
 	body.append('type', type);
 
@@ -384,7 +390,7 @@ async function createContent(
 		});
 	}
 
-	const response = await executeApiRequest.call(this, 'POST', endpoint, body);
+	const response = await executeApiRequest.call(this, 'POST', endpoint, body, true);
 	return response;
 }
 
