@@ -109,5 +109,25 @@ npm start
 
 ## Version history
 
+### 1.1.1
+- Add missing icon on credentials
+
+### 1.1.0
+- Ready for n8n verification process
+
+### 1.0.4
+- Add get folder by path
+
+### 1.0.3
+- Fix create for content object
+
+### 1.0.2
+- Edit readme
+
+### 1.0.1
+- Add license
+- Add readme
+- Fix create for slide object
+
 ### 1.0.0
 - Initial release of the Obscreen node.
