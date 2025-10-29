@@ -1,4 +1,4 @@
-import type { IExecuteFunctions, ILoadOptionsFunctions, INodeExecutionData, INodeProperties, ResourceMapperFields } from 'n8n-workflow';
+import type { IExecuteFunctions, INodeExecutionData, INodeProperties } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 import { 
 	executeApiRequest, 
@@ -8,10 +8,8 @@ import {
 	validateDateTimeFormatWithoutSeconds,
 	validateTimeFormat,
 	validateDayOfWeek,
-	newResourceMapper,
 	newResourceLocator
 } from '../../utils';
-import { slideMappings } from './mappings';
 export { searchSlides } from './search';
 
 export const slideOperations: INodeProperties[] = [
@@ -431,47 +429,112 @@ export const slideParameters: INodeProperties[] = [
 		},
 	},
 	/**
-	 * Fields for Create
+	 * Duration Mode
 	 */
-	newResourceMapper({
-		resourceMapperMethod: 'slideCreateMappingColumns',
-		show: {
-			resource: ['slides'],
-			operation: ['create'],
+	{
+		displayName: 'Duration Mode',
+		name: 'durationMode',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				slideMode: ['regular'],
+			},
 		},
-	}),
+		options: [
+			{
+				name: 'Fixed',
+				value: 'manual',
+				description: 'Use a fixed duration',
+				action: 'Fixed duration',
+			},
+			{
+				name: 'Delegate',
+				value: 'delegate',
+				description: 'Use the content\'s length (if applicable)',
+				action: 'Delegate duration',
+			},
+			{
+				name: 'Endless',
+				value: 'infinite',
+				description: 'Never ending',
+				action: 'Endless',
+			},
+		],
+		default: 'manual',
+	},
+	/** 
+	 * Enabled Field
+	 */
+	{
+		displayName: 'Enabled',
+		name: 'enabled',
+		type: 'boolean',
+		default: true,
+		description: 'Whether the slide should be enabled',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+			},
+		},
+	},
 	/**
-	 * Fields for Update
+	 * Position Field
 	 */
-	newResourceMapper({
-		resourceMapperMethod: 'slideUpdateMappingColumns',
-		show: {
-			resource: ['slides'],
-			operation: ['update'],
+	{
+		displayName: 'Position',
+		name: 'position',
+		type: 'number',
+		default: 999,
+		description: 'The position of the slide in the playlist',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				slideMode: ['regular'],
+			},
 		},
-	}),
+	},
+	/**
+	 * Regular Slide Duration Field
+	 */
+	{
+		displayName: 'Duration',
+		name: 'duration',
+		type: 'number',
+		default: 3,
+		description: 'The duration of the slide in seconds',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				durationMode: ['manual'],
+				slideMode: ['regular'],
+			},
+		},
+	},
+	/**
+	 * Notification Slide Duration Field
+	 */
+	{
+		displayName: 'Notification Duration',
+		name: 'duration',
+		type: 'number',
+		default: 3,
+		description: 'The duration of the notification in seconds',
+		displayOptions: {
+			show: {
+				resource: ['slides'],
+				operation: ['create', 'update'],
+				schedulingEnd: ['duration'],
+				slideMode: ['notification'],
+			},
+		},
+	},
 ];
-
-export async function slideCreateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-	return {
-		fields: [
-			slideMappings.DURATION,
-			slideMappings.DELEGATE_DURATION,
-			slideMappings.POSITION,
-			slideMappings.ENABLED,
-		],
-	};
-}
-
-export async function slideUpdateMappingColumns(this: ILoadOptionsFunctions): Promise<ResourceMapperFields> {
-	return {
-		fields: [
-			slideMappings.DURATION,
-			slideMappings.DELEGATE_DURATION,
-			slideMappings.ENABLED,
-		],
-	};
-}
 
 async function getAllSlides(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const endpoint = '/api/slides';
@@ -532,28 +595,23 @@ async function createSlide(
 	const contentId = parseInt(getResourceId(contentIdValue), 10);
 	const playlistIdValue = this.getNodeParameter('playlistId', itemIndex, '') as any;
 	const playlistId = getResourceId(playlistIdValue);
-	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 	const schedulingStart = this.getNodeParameter('schedulingStart', itemIndex, 'loop') as string;
 	const schedulingEnd = this.getNodeParameter('schedulingEnd', itemIndex, 'loop') as string;
 	const slideMode = this.getNodeParameter('slideMode', itemIndex, 'regular') as string;
+	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
+	const position = this.getNodeParameter('position', itemIndex, 999) as number;
+	const durationMode = this.getNodeParameter('durationMode', itemIndex, 'manual') as string;
+	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
+	
 	const body: Record<string, any> = {
 		content_id: contentId,
 		playlist_id: playlistId,
 		scheduling: schedulingStart,
+		duration: duration === null ? 3 : duration,
+		position: position,
+		duration_mode: durationMode,
+		enabled: enabled.toString(),
 	};
-
-	if (fields.enabled !== undefined) {
-		body.enabled = fields.enabled.toString();
-	}
-	if (fields.duration !== undefined) {
-		body.duration = fields.duration;
-	}
-	if (fields.position !== undefined) {
-		body.position = fields.position;
-	}
-	if (fields.delegateDuration !== undefined) {
-		body.delegate_duration = fields.delegateDuration.toString();
-	}
 
 	if (schedulingStart === 'loop') {
 		// do nothing
@@ -669,28 +727,22 @@ async function updateSlide(
 	const playlistId = getResourceId(playlistIdValue);
 	const slideIdValue = this.getNodeParameter('slideId', itemIndex, '') as any;
 	const slideId = getResourceId(slideIdValue);
-	const fields = (this.getNodeParameter('fields', itemIndex, {}) as any).value;
 	const schedulingStart = this.getNodeParameter('schedulingStart', itemIndex, 'loop') as string;
 	const schedulingEnd = this.getNodeParameter('schedulingEnd', itemIndex, 'loop') as string;
 	const slideMode = this.getNodeParameter('slideMode', itemIndex, 'regular') as string;
+	const duration = this.getNodeParameter('duration', itemIndex, 3) as number;
+	const position = this.getNodeParameter('position', itemIndex, 999) as number;
+	const durationMode = this.getNodeParameter('durationMode', itemIndex, 'manual') as string;
+	const enabled = this.getNodeParameter('enabled', itemIndex, true) as boolean;
 	const body: Record<string, any> = {
 		content_id: contentId,
 		playlist_id: playlistId,
 		scheduling: schedulingStart,
+		duration: duration,
+		position: position,
+		duration_mode: durationMode,
+		enabled: enabled.toString(),
 	};
-
-	if (fields.enabled !== undefined) {
-		body.enabled = fields.enabled.toString();
-	}
-	if (fields.duration !== undefined) {
-		body.duration = fields.duration;
-	}
-	if (fields.position !== undefined) {
-		body.position = fields.position;
-	}
-	if (fields.delegateDuration !== undefined) {
-		body.delegate_duration = fields.delegateDuration.toString();
-	}
 
 	if (schedulingStart === 'loop') {
 		// do nothing

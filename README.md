@@ -109,6 +109,9 @@ npm start
 
 ## Version history
 
+### 1.1.2
+- Using new duration mode for create and update slide objects
+
 ### 1.1.1
 - Add missing icon on credentials
 

@@ -29,7 +29,7 @@ export interface SlideOutput {
 	content_id: number;
 	cron_schedule?: string;
 	cron_schedule_end?: string;
-	delegate_duration?: boolean;
+	duration_mode?: 'manual' | 'delegate' | 'infinite';
 	duration: number;
 	enabled?: boolean;
 	id?: number;
