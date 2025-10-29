@@ -10,7 +10,7 @@ import { NodeOperationError } from 'n8n-workflow';
 import { contentOperations, contentParameters, executeContentOperation, searchContents, searchContentTypes } from './actions/content/contents';
 import { contentFolderOperations, contentFolderParameters, executeContentFolderOperation, searchFolders } from './actions/contentFolder/contentFolders';
 import { playlistOperations, playlistParameters, executePlaylistOperation, playlistCreateMappingColumns, playlistUpdateMappingColumns, searchPlaylists } from './actions/playlist/playlists';
-import { slideOperations, slideParameters, executeSlideOperation, slideCreateMappingColumns, slideUpdateMappingColumns, searchSlides } from './actions/slide/slides';
+import { slideOperations, slideParameters, executeSlideOperation, searchSlides } from './actions/slide/slides';
 import { processOperations, processParameters, executeProcessOperation } from './actions/process/process';
 
 export class Obscreen implements INodeType {
@@ -89,8 +89,6 @@ export class Obscreen implements INodeType {
 		resourceMapping: {
 			playlistCreateMappingColumns,
 			playlistUpdateMappingColumns,
-			slideCreateMappingColumns,
-			slideUpdateMappingColumns,
 		},
 	};
 
